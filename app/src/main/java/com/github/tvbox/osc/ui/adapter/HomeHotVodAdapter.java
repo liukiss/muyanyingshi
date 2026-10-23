@@ -74,18 +74,45 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         } else {
             ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
         }
+        // 手机版适配：横排热播（非网格）时固定 item 根宽，否则 match_parent 根宽会一屏只占一项
+        if (!Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+            ViewGroup.LayoutParams rootLp = helper.itemView.getLayoutParams();
+            if (rootLp != null) {
+                rootLp.width = AutoSizeUtils.mm2px(mContext, 110);
+                helper.itemView.setLayoutParams(rootLp);
+            }
+        }
         applyStyleToImage(ivThumb);
     }
 
     private void applyStyleToImage(final ImageView ivThumb) {
         if (style != null) {
-            ViewGroup container = (ViewGroup) ivThumb.getParent();
-            int width = defaultWidth;
-            int height = (int) (width / style.ratio);
+            final ViewGroup container = (ViewGroup) ivThumb.getParent();
+            if (!Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+                // 横排热播：海报固定列宽，高度按 ratio 换算
+                int w = AutoSizeUtils.mm2px(mContext, 110);
+                ViewGroup.LayoutParams lp = container.getLayoutParams();
+                lp.width = w;
+                lp.height = (int) (w / style.ratio);
+                container.setLayoutParams(lp);
+                return;
+            }
+            // 网格热播：宽度交给网格列宽（MATCH_PARENT），高度按实测宽度和 ratio 换算，
+            // 避免 TV 版按固定 mm 写死宽度在竖屏 360 基准下超出列宽。
             ViewGroup.LayoutParams containerParams = container.getLayoutParams();
-            containerParams.height = AutoSizeUtils.mm2px(mContext, height);
-            containerParams.width = AutoSizeUtils.mm2px(mContext, width);
+            containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
             container.setLayoutParams(containerParams);
+            container.post(new Runnable() {
+                @Override
+                public void run() {
+                    int w = container.getWidth();
+                    if (w > 0) {
+                        ViewGroup.LayoutParams lp = container.getLayoutParams();
+                        lp.height = (int) (w / style.ratio);
+                        container.setLayoutParams(lp);
+                    }
+                }
+            });
         }
     }
 }

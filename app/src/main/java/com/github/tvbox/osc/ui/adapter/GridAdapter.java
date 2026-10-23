@@ -91,13 +91,23 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
 
     private void applyStyleToImage(final ImageView ivThumb) {
         if (style != null) {
-            ViewGroup container = (ViewGroup) ivThumb.getParent();
-            int width = defaultWidth;
-            int height = (int) (width / style.ratio);
+            // 手机版适配：宽度交给网格列宽（MATCH_PARENT），高度按实测宽度和 ratio 换算，
+            // 避免 TV 版按固定 mm 写死宽度在竖屏 360 基准下超出列宽。
+            final ViewGroup container = (ViewGroup) ivThumb.getParent();
             ViewGroup.LayoutParams containerParams = container.getLayoutParams();
-            containerParams.height = AutoSizeUtils.mm2px(mContext, height);
-            containerParams.width = AutoSizeUtils.mm2px(mContext, width);
+            containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
             container.setLayoutParams(containerParams);
+            container.post(new Runnable() {
+                @Override
+                public void run() {
+                    int w = container.getWidth();
+                    if (w > 0) {
+                        ViewGroup.LayoutParams lp = container.getLayoutParams();
+                        lp.height = (int) (w / style.ratio);
+                        container.setLayoutParams(lp);
+                    }
+                }
+            });
         }
     }
 }

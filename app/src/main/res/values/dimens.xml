@@ -11,9 +11,11 @@
     <dimen name="ts_26">26mm</dimen>
     <dimen name="ts_28">28mm</dimen>
     <dimen name="ts_30">30mm</dimen>
+    <dimen name="ts_32">32mm</dimen>
     <dimen name="ts_34">34mm</dimen>
     <dimen name="ts_40">40mm</dimen>
     <dimen name="ts_50">50mm</dimen>
+    <dimen name="ts_60">60mm</dimen>
     <dimen name="ts_100">100mm</dimen>
 
     <dimen name="focus_border_1">1mm</dimen>
@@ -24,6 +26,8 @@
     <dimen name="preview_player_radius">14mm</dimen>
 
     <dimen name="vs_4_">-4mm</dimen>
+    <dimen name="vs_5_">-5mm</dimen>
+    <dimen name="vs_14_">-14mm</dimen>
     <dimen name="vs_20_">-20mm</dimen>
     <dimen name="vs_25_">-25mm</dimen>
     <dimen name="vs_60_">-60mm</dimen>
@@ -43,6 +47,7 @@
     <dimen name="vs_15">15mm</dimen>
     <dimen name="vs_20">20mm</dimen>
     <dimen name="vs_24">24mm</dimen>
+    <dimen name="vs_25">25mm</dimen>
     <dimen name="vs_28">28mm</dimen>
     <dimen name="vs_30">30mm</dimen>
     <dimen name="vs_35">35mm</dimen>
@@ -57,6 +62,7 @@
     <dimen name="vs_90">90mm</dimen>
     <dimen name="vs_100">100mm</dimen>
     <dimen name="vs_108">108mm</dimen>
+    <dimen name="vs_110">110mm</dimen>
     <dimen name="vs_120">120mm</dimen>
     <dimen name="vs_128">128mm</dimen>
     <dimen name="vs_130">130mm</dimen>

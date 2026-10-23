@@ -60,6 +60,16 @@ public class SearchSubtitleDialog extends BaseDialog {
         initViewModel();
     }
 
+    @Override
+    public void show() {
+        super.show();
+        if (!isShowing()) return;
+        android.view.Window window = getWindow();
+        if (window != null) {
+            window.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT, android.view.WindowManager.LayoutParams.MATCH_PARENT);
+        }
+    }
+
     protected void initView(Context context) {
         loadingBar = findViewById(R.id.loadingBar);
         mGridView = findViewById(R.id.mGridView);

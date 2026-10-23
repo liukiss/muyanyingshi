@@ -139,7 +139,7 @@ public class SearchActivity extends BaseActivity {
         initView();
         initViewModel();
         initData();
-        hasKeyBoard = true;
+        hasKeyBoard = false; // 手机版适配：不使用屏幕键盘
         isSearchBack = false;
     }
 
@@ -168,6 +168,13 @@ public class SearchActivity extends BaseActivity {
                 if (isFinishing()) return;
                 focusView.requestFocus();
                 focusView.requestFocusFromTouch();
+                // 手机版适配：进入页面主动弹出系统输入法（manifest 为 stateHidden）
+                if (focusView == etSearch) {
+                    InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
+                    }
+                }
             }
         });
     }
@@ -259,7 +266,7 @@ public class SearchActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
-                hasKeyBoard = true;
+                hasKeyBoard = false;
                 String wd = etSearch.getText().toString().trim();
                 if (!TextUtils.isEmpty(wd)) {
                     if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, true)){
@@ -428,7 +435,7 @@ public class SearchActivity extends BaseActivity {
             setAggregateHotTitle();
             wordsSwitch.setFocusable(false);
             wordsSwitch.setBackground(null);
-            mGridViewWord.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+            mGridViewWord.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
             mGridViewWord.setAdapter(hotWordAdapter);
             refreshSearchHistoryWords();
         } else {
@@ -440,7 +447,7 @@ public class SearchActivity extends BaseActivity {
             setNormalWordTitle();
             wordsSwitch.setFocusable(true);
             wordsSwitch.setBackgroundResource(R.drawable.shape_user_focus);
-            mGridViewWord.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+            mGridViewWord.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
             mGridViewWord.setAdapter(wordAdapter);
         }
     }

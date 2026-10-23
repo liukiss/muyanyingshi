@@ -19,6 +19,12 @@ public class PushActivity extends BaseActivity {
     private ImageView ivQRCode;
     private TextView tvAddress;
 
+    // 手机版适配：推送页保持横屏，AutoSize 使用 640 设计基准
+    @Override
+    protected boolean isLandscapePage() {
+        return true;
+    }
+
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_push;

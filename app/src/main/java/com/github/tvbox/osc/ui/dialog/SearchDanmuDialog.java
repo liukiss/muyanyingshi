@@ -42,6 +42,16 @@ public class SearchDanmuDialog extends BaseDialog {
         initView();
     }
 
+    @Override
+    public void show() {
+        super.show();
+        if (!isShowing()) return;
+        android.view.Window window = getWindow();
+        if (window != null) {
+            window.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT, android.view.WindowManager.LayoutParams.MATCH_PARENT);
+        }
+    }
+
     private void initView() {
         loadingBar = findViewById(R.id.loadingBar);
         gridView = findViewById(R.id.mGridView);

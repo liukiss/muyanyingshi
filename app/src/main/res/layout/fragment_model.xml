@@ -42,7 +42,7 @@
                         android:layout_height="wrap_content"
                         android:text="调试模式"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_26" />
 
                 <Space
                         android:layout_width="0dp"
@@ -55,7 +55,7 @@
                         android:layout_height="wrap_content"
                         android:text="关"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_22" />
 
                 <TextView
                         android:layout_width="wrap_content"
@@ -92,7 +92,7 @@
                             android:layout_height="wrap_content"
                             android:text="配置地址"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                     <Space
                             android:layout_width="0dp"
@@ -106,7 +106,7 @@
                             android:ellipsize="middle"
                             android:singleLine="true"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                     <TextView
                             android:layout_width="wrap_content"
@@ -146,7 +146,7 @@
                         android:layout_height="wrap_content"
                         android:text="配置历史"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_26" />
 
                     <Space
                         android:layout_width="0dp"
@@ -158,7 +158,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_22" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -190,7 +190,7 @@
                         android:layout_height="wrap_content"
                         android:text="线路选择"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_26" />
 
                     <Space
                         android:layout_width="@dimen/vs_10"
@@ -205,7 +205,7 @@
                         android:gravity="right"
                         android:singleLine="true"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_22" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -244,7 +244,7 @@
                             android:layout_height="wrap_content"
                             android:text="首页站源"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                     <Space
                             android:layout_width="0dp"
@@ -258,7 +258,7 @@
                             android:ellipsize="middle"
                             android:singleLine="true"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                     <TextView
                             android:layout_width="wrap_content"
@@ -288,7 +288,7 @@
                         android:layout_height="wrap_content"
                         android:text="下次进入"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_26" />
 
                     <Space
                         android:layout_width="0dp"
@@ -301,7 +301,7 @@
                         android:layout_height="wrap_content"
                         android:textColor="@android:color/white"
                         android:text="点播"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_22" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -349,7 +349,7 @@
                             android:layout_height="wrap_content"
                             android:text="首页推荐"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -361,7 +361,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -392,7 +392,7 @@
                             android:layout_height="wrap_content"
                             android:text="首页多行"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -404,7 +404,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -446,7 +446,7 @@
                             android:layout_height="wrap_content"
                             android:text="搜索展示"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -458,7 +458,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -489,7 +489,7 @@
                             android:layout_height="wrap_content"
                             android:text="聚合搜索"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -501,7 +501,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -541,7 +541,7 @@
                             android:layout_height="wrap_content"
                             android:text="播放器"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                     <Space
                             android:layout_width="0dp"
@@ -553,7 +553,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                     <TextView
                             android:layout_width="wrap_content"
@@ -593,7 +593,7 @@
                             android:layout_height="wrap_content"
                             android:text="IJK解码方式"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -605,7 +605,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -636,7 +636,7 @@
                             android:layout_height="wrap_content"
                             android:text="去广告"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -648,7 +648,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -689,7 +689,7 @@
                         android:layout_height="wrap_content"
                         android:text="弹幕"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_26" />
 
                     <Space
                         android:layout_width="0dp"
@@ -701,7 +701,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_22" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -733,7 +733,7 @@
                         android:layout_height="wrap_content"
                         android:text="弹幕地址"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_26" />
 
                     <Space
                         android:layout_width="@dimen/vs_10"
@@ -748,7 +748,7 @@
                         android:gravity="right"
                         android:singleLine="true"
                         android:textColor="@android:color/white"
-                        android:textSize="@dimen/ts_24" />
+                        android:textSize="@dimen/ts_22" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -788,7 +788,7 @@
                             android:layout_height="wrap_content"
                             android:text="渲染方式"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                     <Space
                             android:layout_width="0dp"
@@ -800,7 +800,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                     <TextView
                             android:layout_width="wrap_content"
@@ -840,7 +840,7 @@
                             android:layout_height="wrap_content"
                             android:text="自动换线"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                     <Space
                             android:layout_width="0dp"
@@ -852,7 +852,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                     <TextView
                             android:layout_width="wrap_content"
@@ -883,7 +883,7 @@
                             android:layout_height="wrap_content"
                             android:text="安全DNS"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                     <Space
                             android:layout_width="0dp"
@@ -895,7 +895,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                     <TextView
                             android:layout_width="wrap_content"
@@ -937,7 +937,7 @@
                             android:layout_height="wrap_content"
                             android:text="嗅探Webview"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                     <Space
                             android:layout_width="0dp"
@@ -950,7 +950,7 @@
                             android:layout_height="wrap_content"
                             android:text="系统自带"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                     <TextView
                             android:layout_width="wrap_content"
@@ -991,7 +991,7 @@
                             android:layout_height="wrap_content"
                             android:text="历史合并"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1003,7 +1003,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -1033,7 +1033,7 @@
                             android:layout_height="wrap_content"
                             android:text="历史记录"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1045,7 +1045,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -1096,7 +1096,7 @@
                             android:layout_height="wrap_content"
                             android:text="换张壁纸"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1132,7 +1132,7 @@
                             android:layout_height="wrap_content"
                             android:text="重置壁纸"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1178,7 +1178,7 @@
                             android:layout_height="wrap_content"
                             android:text="画面缩放"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1190,7 +1190,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -1221,7 +1221,7 @@
                             android:layout_height="wrap_content"
                             android:text="窗口预览"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1233,7 +1233,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -1285,7 +1285,7 @@
                             android:layout_height="wrap_content"
                             android:text="IJK缓存"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1298,7 +1298,7 @@
                             android:layout_height="wrap_content"
                             android:textColor="@android:color/white"
                             android:text="关闭"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_22" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -1330,7 +1330,7 @@
                             android:layout_height="wrap_content"
                             android:text="清空缓存"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1378,7 +1378,7 @@
                             android:layout_height="wrap_content"
                             android:text="数据备份"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"
@@ -1414,7 +1414,7 @@
                             android:layout_height="wrap_content"
                             android:text="关于"
                             android:textColor="@android:color/white"
-                            android:textSize="@dimen/ts_24" />
+                            android:textSize="@dimen/ts_26" />
 
                         <Space
                             android:layout_width="0dp"

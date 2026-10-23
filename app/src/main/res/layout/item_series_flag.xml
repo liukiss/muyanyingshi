@@ -15,13 +15,13 @@
     <TextView
         android:id="@+id/tvSeriesFlag"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/vs_30"
+        android:layout_height="@dimen/vs_35"
         android:ellipsize="end"
         android:gravity="center"
         android:singleLine="true"
         android:text="11111111111"
         android:textColor="@android:color/white"
-        android:textSize="@dimen/ts_20" />
+        android:textSize="@dimen/ts_22" />
 
     <View
         android:id="@+id/tvSeriesFlagSelect"

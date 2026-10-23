@@ -264,14 +264,22 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         return "";
     }
 
+    /**
+     * 手机版适配：横屏页面（直播/推送）返回 true，使用 640 设计基准；
+     * 竖屏页面返回 false，使用 360 设计基准。
+     */
+    protected boolean isLandscapePage() {
+        return false;
+    }
+
     @Override
     public float getSizeInDp() {
-        return isBaseOnWidth() ? 1280 : 720;
+        return isLandscapePage() ? 640 : 360;
     }
 
     @Override
     public boolean isBaseOnWidth() {
-        return !(screenRatio >= 4.0f);
+        return true;
     }
 
     protected static BitmapDrawable globalWp = null;

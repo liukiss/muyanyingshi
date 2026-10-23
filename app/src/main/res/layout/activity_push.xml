@@ -27,13 +27,13 @@
             android:lineSpacingMultiplier="1.5"
             android:textAlignment="gravity"
             android:textColor="@color/color_FFFFFF"
-            android:textSize="@dimen/ts_24"
+            android:textSize="@dimen/ts_22"
             tools:text="1111111111111111111111111111111111111111111111111111" />
 
         <TextView
             android:id="@+id/pushLocal"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/vs_50"
             android:layout_gravity="center"
             android:layout_marginTop="@dimen/vs_20"
             android:background="@drawable/shape_user_focus"

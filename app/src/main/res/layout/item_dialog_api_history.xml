@@ -17,11 +17,12 @@
         android:ellipsize="middle"
         android:focusable="true"
         android:gravity="center"
+        android:minHeight="@dimen/vs_50"
         android:padding="@dimen/vs_10"
         android:singleLine="true"
         android:text="@{name}"
         android:textColor="@color/dialog_text_primary"
-        android:textSize="@dimen/ts_26"
+        android:textSize="@dimen/ts_22"
         tools:text="11111111111111" />
 
     <ImageView

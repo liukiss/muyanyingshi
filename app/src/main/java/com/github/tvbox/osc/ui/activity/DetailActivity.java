@@ -3,6 +3,7 @@ package com.github.tvbox.osc.ui.activity;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Outline;
@@ -94,9 +95,16 @@ public class DetailActivity extends BaseActivity {
     private static final String DETAIL_FALLBACK_SEARCH_TAG = "detail_fallback_search";
     public static final String EXTRA_DETAIL_FALLBACK_CANDIDATES = "detailFallbackCandidates";
     private static final int DETAIL_FALLBACK_MAX_SEARCH = 20;
+
+    // 手机版适配：详情页竖屏浏览用 360 基准，全屏播放（横屏）用 640 基准
+    @Override
+    public float getSizeInDp() {
+        return getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 640 : 360;
+    }
     private static final long DETAIL_FALLBACK_SEARCH_TIMEOUT_MS = 8000L;
     private static final long DETAIL_FALLBACK_DETAIL_TIMEOUT_MS = 6000L;
     private LinearLayout llLayout;
+    private View llDetailContent;
     private FragmentContainerView llPlayerFragmentContainer;
     private View llPlayerFragmentContainerBlock;
     private View llPlayerPlace;
@@ -178,6 +186,7 @@ public class DetailActivity extends BaseActivity {
 
     private void initView() {
         llLayout = findViewById(R.id.llLayout);
+        llDetailContent = findViewById(R.id.llDetailContent);
         llPlayerPlace = findViewById(R.id.previewPlayerPlace);
         llPlayerFragmentContainer = findViewById(R.id.previewPlayer);
         llPlayerFragmentContainerBlock = findViewById(R.id.previewPlayerBlock);
@@ -205,7 +214,7 @@ public class DetailActivity extends BaseActivity {
         mEmptyPlayList = findViewById(R.id.mEmptyPlaylist);
         mGridView = findViewById(R.id.mGridView);
         mGridView.setHasFixedSize(false);
-        this.mGridViewLayoutMgr = new V7GridLayoutManager(this.mContext, 6);
+        this.mGridViewLayoutMgr = new V7GridLayoutManager(this.mContext, 4); // 手机版：竖屏剧集 4 列
         mGridView.setLayoutManager(this.mGridViewLayoutMgr);
 //        mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
 
@@ -911,7 +920,7 @@ public class DetailActivity extends BaseActivity {
                     setTextShow(tvDirector, "导演：", removeHtmlTag(mVideo.director));
                     setTextShow(tvDes, "内容简介：", removeHtmlTag(mVideo.des));
                     if (!TextUtils.isEmpty(mVideo.pic)) {
-                        com.github.tvbox.osc.util.ImgUtil.load(DefaultConfig.checkReplaceProxy(mVideo.pic), ivThumb, AutoSizeUtils.mm2px(mContext, 10), AutoSizeUtils.mm2px(mContext, 300), AutoSizeUtils.mm2px(mContext, 400), mVideo.name);
+                        com.github.tvbox.osc.util.ImgUtil.load(DefaultConfig.checkReplaceProxy(mVideo.pic), ivThumb, AutoSizeUtils.mm2px(mContext, 10), AutoSizeUtils.mm2px(mContext, 360), AutoSizeUtils.mm2px(mContext, 200), mVideo.name);
                     } else {
                         ivThumb.setImageDrawable(com.github.tvbox.osc.util.ImgUtil.createTextDrawable(mVideo.name));
                     }
@@ -2063,6 +2072,10 @@ public class DetailActivity extends BaseActivity {
             previewOrientationChanged = false;
         }
         fullWindows = full;
+        // 手机版适配：进入全屏播放旋转为横屏，退出全屏恢复竖屏浏览
+        setRequestedOrientation(fullWindows
+                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         if (playFragment != null) {
             playFragment.setAutoSwitchLineEnabled(!fullWindows);
             playFragment.setPreviewMode(!fullWindows);
@@ -2071,6 +2084,8 @@ public class DetailActivity extends BaseActivity {
         llPlayerFragmentContainer.setLayoutParams(fullWindows ? windowsFull : windowsPreview);
         setPreviewRoundClip(!fullWindows);
         llPlayerFragmentContainerBlock.setVisibility(!fullWindows && showPreview ? View.VISIBLE : View.GONE);
+        // 手机版适配：全屏播放时隐藏播放区之下的全部内容
+        llDetailContent.setVisibility(fullWindows ? View.GONE : View.VISIBLE);
         mGridView.setVisibility(fullWindows ? View.GONE : View.VISIBLE);
         mGridViewFlag.setVisibility(fullWindows ? View.GONE : View.VISIBLE);
         if (fullWindows) {
@@ -2095,6 +2110,9 @@ public class DetailActivity extends BaseActivity {
             previewOrientation = newConfig.orientation;
             previewOrientationChanged = true;
         }
+        // 手机版适配：方向变化后按新基准重算 AutoSize 密度并刷新布局
+        me.jessyan.autosize.AutoSizeCompat.autoConvertDensityOfCustomAdapt(super.getResources(), this);
+        getWindow().getDecorView().requestLayout();
     }
 
     void ensurePlayFragment() {

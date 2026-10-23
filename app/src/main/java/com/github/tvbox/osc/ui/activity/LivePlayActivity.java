@@ -125,6 +125,13 @@ public class LivePlayActivity extends BaseActivity {
     public static Context context;
     private VideoView<xyz.doikki.videoplayer.player.AbstractPlayer> mVideoView;
     private View switchChannelSnapshotOverlay;
+
+    // 手机版适配：直播页保持横屏，AutoSize 使用 640 设计基准
+    @Override
+    protected boolean isLandscapePage() {
+        return true;
+    }
+
     private ImageView switchChannelSnapshotImage;
     private TextView tvChannelInfo;
     private TextView tvTime;
