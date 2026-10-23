@@ -813,9 +813,16 @@ public class DetailActivity extends BaseActivity {
     private void setTextShow(TextView view, String tag, String info) {
         if (info == null || info.trim().isEmpty()) {
             view.setVisibility(View.GONE);
+            // 手机版：简介外层是限高的滑动容器，需跟随内容一起隐藏
+            if (view.getId() == R.id.tvDes) {
+                findViewById(R.id.scDesc).setVisibility(View.GONE);
+            }
             return;
         }
         view.setVisibility(View.VISIBLE);
+        if (view.getId() == R.id.tvDes) {
+            findViewById(R.id.scDesc).setVisibility(View.VISIBLE);
+        }
         view.setText(Html.fromHtml(getHtml(tag, info)));
     }
 
