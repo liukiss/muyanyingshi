@@ -96,10 +96,15 @@ public class DetailActivity extends BaseActivity {
     public static final String EXTRA_DETAIL_FALLBACK_CANDIDATES = "detailFallbackCandidates";
     private static final int DETAIL_FALLBACK_MAX_SEARCH = 20;
 
-    // 手机版适配：详情页竖屏浏览用 360 基准，全屏播放（横屏）用 640 基准
+    // 手机版适配：详情页竖屏浏览用 360 基准，全屏播放（横屏）用 640 基准。
+    // 注意：不能在这里读取 getResources().getConfiguration()——BaseActivity.getResources()
+    // 会回调 getSizeInDp()，直接读配置会造成无限递归 StackOverflowError。
+    // 改用字段，在全屏切换与方向变化时更新。
+    private boolean landscapeDesign = false;
+
     @Override
-    public float getSizeInDp() {
-        return getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 640 : 360;
+    protected boolean isLandscapePage() {
+        return landscapeDesign;
     }
     private static final long DETAIL_FALLBACK_SEARCH_TIMEOUT_MS = 8000L;
     private static final long DETAIL_FALLBACK_DETAIL_TIMEOUT_MS = 6000L;
@@ -2073,6 +2078,7 @@ public class DetailActivity extends BaseActivity {
         }
         fullWindows = full;
         // 手机版适配：进入全屏播放旋转为横屏，退出全屏恢复竖屏浏览
+        landscapeDesign = full;
         setRequestedOrientation(fullWindows
                 ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -2111,6 +2117,7 @@ public class DetailActivity extends BaseActivity {
             previewOrientationChanged = true;
         }
         // 手机版适配：方向变化后按新基准重算 AutoSize 密度并刷新布局
+        landscapeDesign = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE;
         me.jessyan.autosize.AutoSizeCompat.autoConvertDensityOfCustomAdapt(super.getResources(), this);
         getWindow().getDecorView().requestLayout();
     }
