@@ -90,15 +90,29 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         }
     }
 
+    /**
+     * 手机版：仅全屏播放（详情页全屏）与直播页面沉浸式隐藏系统栏，
+     * 其他页面保留顶部状态栏（信号、电量等），避免遮挡。
+     */
+    public boolean isImmersionPage() {
+        return false;
+    }
+
+    private static final int IMMERSIVE_FLAGS = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+
     public void hideSysBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
-            uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-            uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
-            uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-            uiOptions |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-            uiOptions |= View.SYSTEM_UI_FLAG_FULLSCREEN;
-            uiOptions |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+            if (isImmersionPage()) {
+                uiOptions |= IMMERSIVE_FLAGS;
+            } else {
+                uiOptions &= ~IMMERSIVE_FLAGS;
+            }
             getWindow().getDecorView().setSystemUiVisibility(uiOptions);
         }
     }
@@ -109,6 +123,10 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
             decorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
                 @Override
                 public void onSystemUiVisibilityChange(int visibility) {
+                    // 手机版：非沉浸页面保持状态栏常显，不再自动隐藏
+                    if (!isImmersionPage()) {
+                        return;
+                    }
                     int hiddenBars = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN;
                     if ((visibility & hiddenBars) != hiddenBars) {
                         decorView.removeCallbacks(hideSysBarRunnable);

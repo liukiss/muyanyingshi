@@ -75,7 +75,7 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
             ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
         }
         // 手机版适配：横排热播（非网格）时固定 item 根宽，否则 match_parent 根宽会一屏只占一项
-        if (!Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+        if (!Hawk.get(HawkConfig.HOME_REC_STYLE, true)) {
             ViewGroup.LayoutParams rootLp = helper.itemView.getLayoutParams();
             if (rootLp != null) {
                 rootLp.width = AutoSizeUtils.mm2px(mContext, 110);
@@ -88,7 +88,7 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
     private void applyStyleToImage(final ImageView ivThumb) {
         if (style != null) {
             final ViewGroup container = (ViewGroup) ivThumb.getParent();
-            if (!Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+            if (!Hawk.get(HawkConfig.HOME_REC_STYLE, true)) {
                 // 横排热播：海报固定列宽，高度按 ratio 换算
                 int w = AutoSizeUtils.mm2px(mContext, 110);
                 ViewGroup.LayoutParams lp = container.getLayoutParams();

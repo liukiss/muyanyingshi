@@ -132,6 +132,12 @@ public class LivePlayActivity extends BaseActivity {
         return true;
     }
 
+    // 手机版：直播属于全屏播放场景，隐藏系统栏
+    @Override
+    public boolean isImmersionPage() {
+        return true;
+    }
+
     private ImageView switchChannelSnapshotImage;
     private TextView tvChannelInfo;
     private TextView tvTime;

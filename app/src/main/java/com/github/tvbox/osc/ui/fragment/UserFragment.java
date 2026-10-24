@@ -26,7 +26,6 @@ import com.github.tvbox.osc.ui.activity.DetailActivity;
 import com.github.tvbox.osc.ui.activity.FastSearchActivity;
 import com.github.tvbox.osc.ui.activity.HistoryActivity;
 import com.github.tvbox.osc.ui.activity.LivePlayActivity;
-import com.github.tvbox.osc.ui.activity.PushActivity;
 import com.github.tvbox.osc.ui.activity.SearchActivity;
 import com.github.tvbox.osc.ui.activity.SettingActivity;
 import com.github.tvbox.osc.ui.adapter.HomeHotVodAdapter;
@@ -67,7 +66,6 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     private LinearLayout tvSetting;
     private LinearLayout tvHistory;
     private LinearLayout tvCollect;
-    private LinearLayout tvPush;
     public static HomeHotVodAdapter homeHotVodAdapter;
     private List<Movie.Video> homeSourceRec;
     public static TvRecyclerView tvHotList;
@@ -89,7 +87,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     @Override
     protected void onFragmentResume() {
         super.onFragmentResume();
-        if (Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+        if (Hawk.get(HawkConfig.HOME_REC_STYLE, true)) {
             tvHotList.setVisibility(View.VISIBLE);
             tvHotList.setHasFixedSize(true);
             int spanCount = 3; // 手机版：热播推荐固定 3 列
@@ -162,18 +160,15 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         tvSetting = findViewById(R.id.tvSetting);
         tvCollect = findViewById(R.id.tvFavorite);
         tvHistory = findViewById(R.id.tvHistory);
-        tvPush = findViewById(R.id.tvPush);
         tvLive.setOnClickListener(this);
         tvSearch.setOnClickListener(this);
         tvSetting.setOnClickListener(this);
         tvHistory.setOnClickListener(this);
-        tvPush.setOnClickListener(this);
         tvCollect.setOnClickListener(this);
         tvLive.setOnFocusChangeListener(focusChangeListener);
         tvSearch.setOnFocusChangeListener(focusChangeListener);
         tvSetting.setOnFocusChangeListener(focusChangeListener);
         tvHistory.setOnFocusChangeListener(focusChangeListener);
-        tvPush.setOnFocusChangeListener(focusChangeListener);
         tvCollect.setOnFocusChangeListener(focusChangeListener);
         tvHotList = findViewById(R.id.tvHotList);
         if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec!=null) {
@@ -383,8 +378,6 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             jumpActivity(SettingActivity.class);
         } else if (v.getId() == R.id.tvHistory) {
             jumpActivity(HistoryActivity.class);
-        } else if (v.getId() == R.id.tvPush) {
-            jumpActivity(PushActivity.class);
         } else if (v.getId() == R.id.tvFavorite) {
             jumpActivity(CollectActivity.class);
         }

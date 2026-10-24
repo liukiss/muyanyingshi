@@ -183,16 +183,18 @@ public class HomeActivity extends BaseActivity {
                 showSiteSwitch();
             }
         });
-        findViewById(R.id.tvSettingHome).setOnClickListener(new View.OnClickListener() {
+        // 手机版：原“设置”入口已移到底部导航，顶栏改为图标式“推送”按钮
+        findViewById(R.id.tvPushHome).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
-                jumpActivity(SettingActivity.class);
+                jumpActivity(PushActivity.class);
             }
         });
         this.sortAdapter = new SortAdapter();
         this.mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
-        this.mGridView.setSpacingWithMargins(0, AutoSizeUtils.dp2px(this.mContext, 10.0f));
+        // 手机版：分类行贴左显示并压缩列间距
+        this.mGridView.setSpacingWithMargins(AutoSizeUtils.mm2px(this.mContext, 8.0f), AutoSizeUtils.dp2px(this.mContext, 10.0f));
         this.mGridView.setAdapter(this.sortAdapter);
         sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override

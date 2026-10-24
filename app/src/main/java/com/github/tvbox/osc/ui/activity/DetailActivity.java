@@ -106,6 +106,14 @@ public class DetailActivity extends BaseActivity {
     protected boolean isLandscapePage() {
         return landscapeDesign;
     }
+
+    /**
+     * 手机版：只有全屏播放时才隐藏系统栏，竖屏浏览详情时保留顶部状态栏。
+     */
+    @Override
+    public boolean isImmersionPage() {
+        return landscapeDesign;
+    }
     private static final long DETAIL_FALLBACK_SEARCH_TIMEOUT_MS = 8000L;
     private static final long DETAIL_FALLBACK_DETAIL_TIMEOUT_MS = 6000L;
     private LinearLayout llLayout;
@@ -2086,6 +2094,8 @@ public class DetailActivity extends BaseActivity {
         fullWindows = full;
         // 手机版适配：进入全屏播放旋转为横屏，退出全屏恢复竖屏浏览
         landscapeDesign = full;
+        // 全屏播放隐藏状态栏，退出后恢复
+        hideSysBar();
         setRequestedOrientation(fullWindows
                 ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);

@@ -12,6 +12,7 @@ import android.view.WindowManager;
 import androidx.annotation.NonNull;
 
 import com.github.tvbox.osc.R;
+import com.github.tvbox.osc.base.BaseActivity;
 
 import xyz.doikki.videoplayer.util.CutoutUtil;
 
@@ -56,15 +57,37 @@ public class BaseDialog extends Dialog {
                 || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed());
     }
 
+    /**
+     * 手机版：对话框跟随宿主页面——只有全屏播放/直播页才隐藏系统栏，
+     * 普通页面保持顶部状态栏可见。
+     */
     private void hideSysBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            boolean immersion = false;
+            Context context = getContext();
+            while (context instanceof android.content.ContextWrapper) {
+                if (context instanceof BaseActivity) {
+                    immersion = ((BaseActivity) context).isImmersionPage();
+                    break;
+                }
+                context = ((android.content.ContextWrapper) context).getBaseContext();
+            }
             int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
-            uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-            uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
-            uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-            uiOptions |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-            uiOptions |= View.SYSTEM_UI_FLAG_FULLSCREEN;
-            uiOptions |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+            if (immersion) {
+                uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+                uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+                uiOptions |= View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+                uiOptions |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+                uiOptions |= View.SYSTEM_UI_FLAG_FULLSCREEN;
+                uiOptions |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+            } else {
+                uiOptions &= ~(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            }
             getWindow().getDecorView().setSystemUiVisibility(uiOptions);
         }
     }
