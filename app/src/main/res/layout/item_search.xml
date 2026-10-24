@@ -7,7 +7,7 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/vs_120">
+        android:layout_height="@dimen/vs_160">
 
         <ImageView
             android:id="@+id/ivThumb"
@@ -69,8 +69,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/shape_thumb_bottom_name"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
+                android:ellipsize="end"
                 android:padding="@dimen/vs_4"
                 android:singleLine="true"
                 android:textColor="@android:color/white"
