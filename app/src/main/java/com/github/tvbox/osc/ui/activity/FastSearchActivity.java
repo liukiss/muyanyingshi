@@ -228,10 +228,11 @@ public class FastSearchActivity extends BaseActivity {
         setLoadSir(llLayout);
 
         // 分词
-        searchWordAdapter = new SearchWordAdapter();
+        // 手机版：搜索对象关键词改为左侧竖排按钮，样式与“全部”一致
+        searchWordAdapter = new SearchWordAdapter(R.layout.item_fast_search_object);
         mGridViewWordFenci = findViewById(R.id.mGridViewWordFenci);
         mGridViewWordFenci.setAdapter(searchWordAdapter);
-        mGridViewWordFenci.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
+        mGridViewWordFenci.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         searchWordAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
