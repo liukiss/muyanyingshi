@@ -554,9 +554,8 @@ public class DetailActivity extends BaseActivity {
 
                     seriesAdapter.getData().get(vodInfo.playIndex).selected = true;
                     seriesAdapter.notifyItemChanged(vodInfo.playIndex);
-                    //选集全屏 想选集不全屏的注释下面一行
-                    if (showPreview && !fullWindows && previewVodInfo != null && TextUtils.equals(vodInfo.playFlag, previewVodInfo.playFlag) && (playFragment.getPlayer().isPlaying() || isCurrentPlaying)) enterFullPreview();
-                    if (!showPreview || reload) {
+                    //手机版：点击集数只切换选中集，不再自动进入全屏播放
+                    if (showPreview && reload) {
                         jumpToPlay();
                         firstReverse=false;
                     }
@@ -717,7 +716,7 @@ public class DetailActivity extends BaseActivity {
         }
 
         Paint pFont = new Paint();
-//        pFont.setTypeface(Typeface.DEFAULT );
+        pFont.setTextSize(getResources().getDimension(R.dimen.ts_16));
         Rect rect = new Rect();
 
         List<VodInfo.VodSeries> list = vodInfo.seriesMap.get(vodInfo.playFlag);
@@ -730,10 +729,13 @@ public class DetailActivity extends BaseActivity {
                 w = rect.width();
             }
         }
-        w += 32;
-        int screenWidth = getWindowManager().getDefaultDisplay().getWidth()/3;
-        int offset = screenWidth/w;
-        if(offset <=2) offset =2;
+        //手机版：按最长的集数名称计算列数，保证按钮文字完整显示
+        int itemPadding = getResources().getDimensionPixelSize(R.dimen.vs_6) * 2;
+        int itemMargin = getResources().getDimensionPixelSize(R.dimen.vs_2) * 2;
+        int itemSpacing = getResources().getDimensionPixelSize(R.dimen.vs_10);
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int offset = screenWidth / (w + itemPadding + itemMargin + itemSpacing);
+        if(offset <=3) offset =3;
         if(offset > 6) offset =6;
         mGridViewLayoutMgr.setSpanCount(offset);
         seriesAdapter.setNewData(vodInfo.seriesMap.get(vodInfo.playFlag));
