@@ -84,12 +84,12 @@
 
 				<com.owen.tvrecyclerview.widget.TvRecyclerView
 					android:id="@+id/mGroupGridView"
-					android:layout_width="@dimen/vs_120"
+					android:layout_width="@dimen/vs_70"
 					android:layout_height="wrap_content"
 					android:divider="@null"
 					android:fadeScrollbars="false"
 					android:listSelector="@drawable/item_bg_selector_left"
-					android:padding="@dimen/vs_10"
+					android:padding="@dimen/vs_2"
 					android:scrollbars="none" />
 
 			</LinearLayout>
@@ -157,13 +157,13 @@
 
 			<com.owen.tvrecyclerview.widget.TvRecyclerView
 				android:id="@+id/mChannelGridView"
-				android:layout_width="@dimen/vs_200"
+				android:layout_width="@dimen/vs_160"
 				android:layout_height="match_parent"
 				android:divider="@null"
 				android:fadeScrollbars="false"
 				android:focusable="true"
 				android:listSelector="@drawable/item_bg_selector_right"
-				android:padding="@dimen/vs_5"
+				android:padding="@dimen/vs_2"
 				android:scrollbars="none" />
 
 			<LinearLayout
@@ -277,7 +277,7 @@
 
     <LinearLayout
         android:id="@+id/tvRightSettingLayout"
-        android:layout_width="@dimen/vs_360"
+        android:layout_width="@dimen/vs_200"
         android:layout_height="match_parent"
         android:layout_margin="@dimen/vs_0"
         android:layout_gravity="right"
@@ -288,17 +288,17 @@
 
         <com.owen.tvrecyclerview.widget.TvRecyclerView
             android:id="@+id/mSettingItemView"
-            android:layout_width="@dimen/vs_220"
+            android:layout_width="@dimen/vs_130"
             android:layout_height="match_parent"
             android:divider="@null"
             android:fadeScrollbars="false"
             android:gravity= "center"
             android:listSelector="@drawable/item_bg_selector_left"
-            android:padding="@dimen/vs_5"
+            android:padding="@dimen/vs_3"
             android:scrollbars="none"
             android:visibility="visible"
             app:tv_selectedItemIsCentered="true"
-            app:tv_verticalSpacingWithMargins="@dimen/vs_4" />
+            app:tv_verticalSpacingWithMargins="@dimen/vs_1" />
 
         <View
             android:layout_width="@dimen/vs_1"
@@ -309,17 +309,17 @@
 
         <com.owen.tvrecyclerview.widget.TvRecyclerView
             android:id="@+id/mSettingGroupView"
-            android:layout_width="@dimen/vs_120"
+            android:layout_width="@dimen/vs_65"
             android:layout_height="match_parent"
             android:divider="@null"
             android:fadeScrollbars="false"
             android:gravity= "center"
             android:listSelector="@drawable/item_bg_selector_right"
-            android:padding="@dimen/vs_10"
+            android:padding="@dimen/vs_3"
             android:scrollbars="none"
             android:visibility="visible"
             app:tv_selectedItemIsCentered="true"
-            app:tv_verticalSpacingWithMargins="@dimen/vs_4" />
+            app:tv_verticalSpacingWithMargins="@dimen/vs_1" />
     </LinearLayout>
 
     <TextView

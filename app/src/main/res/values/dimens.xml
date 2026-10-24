@@ -64,6 +64,7 @@
     <dimen name="vs_48">48mm</dimen>
     <dimen name="vs_50">50mm</dimen>
     <dimen name="vs_60">60mm</dimen>
+    <dimen name="vs_65">65mm</dimen>
     <dimen name="vs_70">70mm</dimen>
     <dimen name="vs_76">76mm</dimen>
     <dimen name="vs_80">80mm</dimen>

@@ -2,10 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="@dimen/vs_6"
-    android:layout_marginTop="@dimen/vs_4"
-    android:layout_marginRight="@dimen/vs_6"
-    android:layout_marginBottom="@dimen/vs_4"
+    android:layout_marginLeft="@dimen/vs_3"
+    android:layout_marginTop="@dimen/vs_1"
+    android:layout_marginRight="@dimen/vs_3"
+    android:layout_marginBottom="@dimen/vs_1"
     android:layout_gravity="center"
     android:background="@drawable/shape_live_focus"
     android:focusable="true"
@@ -15,12 +15,12 @@
     <TextView
         android:id="@+id/tvSettingGroupName"
         android:layout_width="@dimen/vs_0"
-        android:layout_height="@dimen/vs_50"
+        android:layout_height="@dimen/vs_30"
         android:layout_weight="1"
         android:ellipsize="marquee"
         android:gravity="center"
         android:marqueeRepeatLimit="marquee_forever"
         android:singleLine="true"
         android:textColor="@android:color/white"
-        android:textSize="@dimen/ts_20" />
+        android:textSize="@dimen/ts_14" />
 </LinearLayout>
