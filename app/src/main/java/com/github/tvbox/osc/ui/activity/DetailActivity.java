@@ -848,11 +848,11 @@ public class DetailActivity extends BaseActivity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             return;
         }
-        final float radius = getResources().getDimension(R.dimen.preview_player_radius);
+        // 手机版：播放区域改为矩形，不再使用圆角裁切
         ViewOutlineProvider provider = new ViewOutlineProvider() {
             @Override
             public void getOutline(View view, Outline outline) {
-                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+                outline.setRect(0, 0, view.getWidth(), view.getHeight());
             }
         };
         llPlayerFragmentContainer.setClipToOutline(true);
