@@ -265,6 +265,9 @@ public class LiveControlActivity extends BaseActivity {
                 }
             });
         } else {
+            // 使用缓存的直播数据时也必须切回成功状态，否则 LoadSir 不会把页面内容挂回视图树，
+            // 会出现页面空白但直播声音正常播放的现象
+            showSuccess();
             setupChannelAndPlay();
         }
     }
