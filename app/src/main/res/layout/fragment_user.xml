@@ -19,7 +19,7 @@
         app:tv_selectedItemIsCentered="false"
         app:tv_verticalSpacingWithMargins="@dimen/vs_10" />
 
-    <!-- 手机版：历史、直播、搜索、收藏、设置 统一放到底部，顺序：直播、历史、收藏、搜索、设置 -->
+    <!-- 手机版：直播、历史、搜索、设置 统一放到底部，等宽分散排列（收藏已移至顶栏图标） -->
     <LinearLayout
         android:id="@+id/userBottomBar"
         android:layout_width="match_parent"
@@ -31,8 +31,8 @@
             android:id="@+id/tvLive"
             android:layout_width="@dimen/vs_0"
             android:layout_height="@dimen/vs_50"
-            android:layout_marginLeft="@dimen/vs_2"
-            android:layout_marginRight="@dimen/vs_2"
+            android:layout_marginLeft="@dimen/vs_6"
+            android:layout_marginRight="@dimen/vs_6"
             android:layout_weight="1"
             android:background="@drawable/shape_user_focus"
             android:focusable="true"
@@ -62,8 +62,8 @@
             android:id="@+id/tvHistory"
             android:layout_width="@dimen/vs_0"
             android:layout_height="@dimen/vs_50"
-            android:layout_marginLeft="@dimen/vs_2"
-            android:layout_marginRight="@dimen/vs_2"
+            android:layout_marginLeft="@dimen/vs_6"
+            android:layout_marginRight="@dimen/vs_6"
             android:layout_weight="1"
             android:background="@drawable/shape_user_focus"
             android:focusable="true"
@@ -90,42 +90,11 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/tvFavorite"
-            android:layout_width="@dimen/vs_0"
-            android:layout_height="@dimen/vs_50"
-            android:layout_marginLeft="@dimen/vs_2"
-            android:layout_marginRight="@dimen/vs_2"
-            android:layout_weight="1"
-            android:background="@drawable/shape_user_focus"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="@dimen/vs_4">
-
-            <ImageView
-                android:layout_width="@dimen/vs_25"
-                android:layout_height="@dimen/vs_25"
-                android:alpha="0.75"
-                android:src="@drawable/icon_collect" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/vs_2"
-                android:focusable="false"
-                android:focusableInTouchMode="false"
-                android:gravity="center"
-                android:text="收藏"
-                android:textColor="@color/color_CCFFFFFF"
-                android:textSize="@dimen/ts_18" />
-        </LinearLayout>
-
-        <LinearLayout
             android:id="@+id/tvSearch"
             android:layout_width="@dimen/vs_0"
             android:layout_height="@dimen/vs_50"
-            android:layout_marginLeft="@dimen/vs_2"
-            android:layout_marginRight="@dimen/vs_2"
+            android:layout_marginLeft="@dimen/vs_6"
+            android:layout_marginRight="@dimen/vs_6"
             android:layout_weight="1"
             android:background="@drawable/shape_user_focus"
             android:focusable="true"
@@ -155,8 +124,8 @@
             android:id="@+id/tvSetting"
             android:layout_width="@dimen/vs_0"
             android:layout_height="@dimen/vs_50"
-            android:layout_marginLeft="@dimen/vs_2"
-            android:layout_marginRight="@dimen/vs_2"
+            android:layout_marginLeft="@dimen/vs_6"
+            android:layout_marginRight="@dimen/vs_6"
             android:layout_weight="1"
             android:background="@drawable/shape_user_focus"
             android:focusable="true"

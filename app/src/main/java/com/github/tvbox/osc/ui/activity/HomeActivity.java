@@ -131,8 +131,9 @@ public class HomeActivity extends BaseActivity {
             // Re-apply the visible top state once the final display metrics are available.
             hideSysBar();
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) topLayout.getLayoutParams();
-            params.topMargin = AutoSizeUtils.mm2px(HomeActivity.this, 10.0f);
-            params.height = AutoSizeUtils.mm2px(HomeActivity.this, 50.0f);
+            // 手机版：状态栏下方不再预留大块空白，文案贴顶
+            params.topMargin = AutoSizeUtils.mm2px(HomeActivity.this, 0f);
+            params.height = AutoSizeUtils.mm2px(HomeActivity.this, 45.0f);
             topLayout.setLayoutParams(params);
             topLayout.setAlpha(1.0f);
             refreshTopInfoTextSize();
@@ -183,6 +184,14 @@ public class HomeActivity extends BaseActivity {
                 showSiteSwitch();
             }
         });
+        // 手机版：收藏入口移到顶栏图标，位于“推送”左侧
+        findViewById(R.id.tvCollectHome).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                jumpActivity(CollectActivity.class);
+            }
+        });
         // 手机版：原“设置”入口已移到底部导航，顶栏改为图标式“推送”按钮
         findViewById(R.id.tvPushHome).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -194,7 +203,7 @@ public class HomeActivity extends BaseActivity {
         this.sortAdapter = new SortAdapter();
         this.mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
         // 手机版：分类行贴左显示并压缩列间距
-        this.mGridView.setSpacingWithMargins(AutoSizeUtils.mm2px(this.mContext, 8.0f), AutoSizeUtils.dp2px(this.mContext, 10.0f));
+        this.mGridView.setSpacingWithMargins(AutoSizeUtils.mm2px(this.mContext, 4.0f), AutoSizeUtils.dp2px(this.mContext, 8.0f));
         this.mGridView.setAdapter(this.sortAdapter);
         sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -256,12 +265,11 @@ public class HomeActivity extends BaseActivity {
 
             @Override
             public void onItemClick(TvRecyclerView parent, View itemView, int position) {
+                // 手机版：分类标签只负责切换分类，重复点击不再弹出换源弹窗（改由顶栏换源按钮触发）
                 if (itemView != null && currentSelected == position) {
                     BaseLazyFragment baseLazyFragment = fragments.get(currentSelected);
                     if ((baseLazyFragment instanceof GridFragment) && !sortAdapter.getItem(position).filters.isEmpty()) {// 弹出筛选
                         ((GridFragment) baseLazyFragment).showFilter();
-                    } else if (baseLazyFragment instanceof UserFragment) {
-                        showSiteSwitch();
                     }
                 }
             }
