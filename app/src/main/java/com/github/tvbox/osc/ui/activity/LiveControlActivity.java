@@ -1,6 +1,8 @@
 package com.github.tvbox.osc.ui.activity;
 
+import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -8,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.base.BaseActivity;
@@ -20,13 +23,25 @@ import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.dialog.SelectDialog;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.HistoryHelper;
+import com.github.tvbox.osc.util.live.TxtSubscribe;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.AbsCallback;
+import com.lzy.okgo.model.Response;
 import com.orhanobut.hawk.Hawk;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import xyz.doikki.videoplayer.exo.ExoMediaSourceHelper;
 import xyz.doikki.videoplayer.player.VideoView;
@@ -51,6 +66,9 @@ public class LiveControlActivity extends BaseActivity {
     private LiveChannelItem currentChannelItem;
     private final LivePlayerManager livePlayerManager = new LivePlayerManager();
     private boolean liveConfigLoading = false;
+    private boolean liveProxyLoading = false;
+    private String pendingChannelName;
+    private int pendingSourceIndex = -1;
 
     @Override
     protected int getLayoutResID() {
@@ -202,7 +220,8 @@ public class LiveControlActivity extends BaseActivity {
     }
 
     private void loadLiveChannels() {
-        if (ApiConfig.get().shouldReloadLiveConfig()) {
+        List<LiveChannelGroup> cachedGroups = ApiConfig.get().getChannelGroupList();
+        if (ApiConfig.get().shouldReloadLiveConfig() || cachedGroups == null || cachedGroups.isEmpty()) {
             if (liveConfigLoading) return;
             liveConfigLoading = true;
             showLoading();
@@ -252,8 +271,30 @@ public class LiveControlActivity extends BaseActivity {
 
     private void setupChannelAndPlay() {
         initSettingSelections();
-        String lastChannelName = Hawk.get(HawkConfig.LIVE_CHANNEL, "");
-        boolean found = !TextUtils.isEmpty(lastChannelName) && findChannelByName(lastChannelName);
+        loadChannelsOrPlay();
+    }
+
+    private void loadChannelsOrPlay() {
+        List<LiveChannelGroup> groups = ApiConfig.get().getChannelGroupList();
+        if (groups == null || groups.isEmpty()) {
+            showEmpty();
+            return;
+        }
+        // 配置中的直播地址为本地代理时，需要先拉取代理返回的真实频道列表
+        if (groups.size() == 1 && groups.get(0) != null && groups.get(0).getGroupName() != null
+                && groups.get(0).getGroupName().startsWith("http://127.0.0.1")) {
+            loadProxyLives(groups.get(0).getGroupName());
+            return;
+        }
+        playLastOrDefaultChannel();
+    }
+
+    private void playLastOrDefaultChannel() {
+        String channelName = pendingChannelName != null ? pendingChannelName : Hawk.get(HawkConfig.LIVE_CHANNEL, "");
+        int sourceIndex = pendingSourceIndex;
+        pendingChannelName = null;
+        pendingSourceIndex = -1;
+        boolean found = !TextUtils.isEmpty(channelName) && findChannelByName(channelName);
         if (!found) {
             found = selectDefaultChannel();
         }
@@ -261,7 +302,135 @@ public class LiveControlActivity extends BaseActivity {
             showEmpty();
             return;
         }
+        if (sourceIndex >= 0 && currentChannelItem.getSourceNum() > 0) {
+            currentChannelItem.setSourceIndex(Math.min(sourceIndex, currentChannelItem.getSourceNum() - 1));
+        }
         playCurrentChannel();
+    }
+
+    private void loadProxyLives(String proxyUrl) {
+        if (liveProxyLoading) return;
+        liveProxyLoading = true;
+        showPlayerLoading(true);
+        String url = proxyUrl;
+        try {
+            Uri parsedUrl = Uri.parse(proxyUrl);
+            String ext = parsedUrl.getQueryParameter("ext");
+            if (!TextUtils.isEmpty(ext)) {
+                url = new String(Base64.decode(ext, Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8");
+            }
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+        if (!isValidLiveProxyUrl(url)) {
+            liveProxyLoading = false;
+            showEmpty();
+            return;
+        }
+        final String liveUrl = url;
+        if (liveUrl.contains(".py") || liveUrl.contains(".js")) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    ExecutorService executor = Executors.newSingleThreadExecutor();
+                    Future<String> future = executor.submit(new Callable<String>() {
+                        @Override
+                        public String call() {
+                            Spider spider = ApiConfig.get().getLiveCSP(liveUrl);
+                            return spider.liveContent(liveUrl);
+                        }
+                    });
+                    String content = null;
+                    try {
+                        content = future.get(ApiConfig.get().getLiveConnectTimeoutSeconds(), TimeUnit.SECONDS);
+                    } catch (TimeoutException e) {
+                        future.cancel(true);
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                    } finally {
+                        executor.shutdown();
+                    }
+                    applyProxyLives(content);
+                }
+            }).start();
+        } else {
+            OkGo.<String>get(liveUrl).execute(new AbsCallback<String>() {
+                @Override
+                public String convertResponse(okhttp3.Response response) throws Throwable {
+                    if (response.body() == null) return "";
+                    return response.body().string();
+                }
+
+                @Override
+                public void onSuccess(Response<String> response) {
+                    applyProxyLives(response.body());
+                }
+
+                @Override
+                public void onError(Response<String> response) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            liveProxyLoading = false;
+                            if (!isFinishing()) {
+                                showEmpty();
+                                Toast.makeText(LiveControlActivity.this, "直播列表加载失败", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    private void applyProxyLives(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    liveProxyLoading = false;
+                    if (!isFinishing()) showEmpty();
+                }
+            });
+            return;
+        }
+        try {
+            JsonArray livesArray = TxtSubscribe.parseToJsonArray(content);
+            ApiConfig.get().loadLives(livesArray);
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+        List<LiveChannelGroup> groups = ApiConfig.get().getChannelGroupList();
+        if (groups == null || groups.isEmpty()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    liveProxyLoading = false;
+                    if (!isFinishing()) showEmpty();
+                }
+            });
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                liveProxyLoading = false;
+                if (isFinishing()) return;
+                showSuccess();
+                initSettingSelections();
+                playLastOrDefaultChannel();
+            }
+        });
+    }
+
+    private boolean isValidLiveProxyUrl(String url) {
+        if (TextUtils.isEmpty(url)) return false;
+        String lowerUrl = url.trim().toLowerCase(Locale.US);
+        return lowerUrl.startsWith("http://")
+                || lowerUrl.startsWith("https://")
+                || lowerUrl.startsWith("rtsp://")
+                || lowerUrl.startsWith("rtmp://")
+                || lowerUrl.startsWith("rtp://");
     }
 
     private boolean findChannelByName(String channelName) {
@@ -687,19 +856,9 @@ public class LiveControlActivity extends BaseActivity {
 
     private void restoreChannelAndPlay(String channelName, int sourceIndex) {
         initSettingSelections();
-        boolean found = !TextUtils.isEmpty(channelName) && findChannelByName(channelName);
-        if (!found) {
-            found = selectDefaultChannel();
-        }
-        if (!found) {
-            currentChannelItem = null;
-            if (mVideoView != null) mVideoView.release();
-            showEmpty();
-            return;
-        }
-        if (sourceIndex >= 0 && currentChannelItem.getSourceNum() > 0) {
-            currentChannelItem.setSourceIndex(Math.min(sourceIndex, currentChannelItem.getSourceNum() - 1));
-        }
-        playCurrentChannel();
+        pendingChannelName = channelName;
+        pendingSourceIndex = sourceIndex;
+        showPlayerLoading(true);
+        loadChannelsOrPlay();
     }
 }
