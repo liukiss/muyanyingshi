@@ -49,6 +49,9 @@
             android:name=".ui.activity.LivePlayActivity"
             android:screenOrientation="sensorLandscape" />
         <activity
+            android:name=".ui.activity.LiveControlActivity"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".ui.activity.DetailActivity"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="portrait" />
