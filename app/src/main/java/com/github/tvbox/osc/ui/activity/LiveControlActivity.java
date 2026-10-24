@@ -8,6 +8,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
@@ -17,6 +20,8 @@ import com.github.tvbox.osc.bean.LiveChannelItem;
 import com.github.tvbox.osc.bean.LivePlayerManager;
 import com.github.tvbox.osc.bean.LiveSettingGroup;
 import com.github.tvbox.osc.bean.LiveSettingItem;
+import com.github.tvbox.osc.ui.adapter.LiveChannelGroupAdapter;
+import com.github.tvbox.osc.ui.adapter.LiveChannelItemAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.dialog.SelectDialog;
 import com.github.tvbox.osc.util.HawkConfig;
@@ -28,6 +33,8 @@ import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
 import com.lzy.okgo.model.Response;
 import com.orhanobut.hawk.Hawk;
+import com.owen.tvrecyclerview.widget.TvRecyclerView;
+import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,6 +64,12 @@ public class LiveControlActivity extends BaseActivity {
     private VideoView<xyz.doikki.videoplayer.player.AbstractPlayer> mVideoView;
     private ProgressBar pbLiveLoading;
     private TextView tvPlayerChannel;
+    private View vChannelDivider;
+    private TvRecyclerView mGroupListView;
+    private TvRecyclerView mChannelListView;
+    private LiveChannelGroupAdapter liveChannelGroupAdapter;
+    private LiveChannelItemAdapter liveChannelItemAdapter;
+    private int selectedGroupIndex = -1;
 
     private LiveChannelItem currentChannelItem;
     private final LivePlayerManager livePlayerManager = new LivePlayerManager();
@@ -76,6 +89,10 @@ public class LiveControlActivity extends BaseActivity {
         mVideoView = findViewById(R.id.mVideoView);
         pbLiveLoading = findViewById(R.id.pbLiveLoading);
         tvPlayerChannel = findViewById(R.id.tvPlayerChannel);
+        vChannelDivider = findViewById(R.id.vChannelDivider);
+        mGroupListView = findViewById(R.id.mGroupListView);
+        mChannelListView = findViewById(R.id.mChannelListView);
+        initChannelListViews();
 
         livePlayerManager.init(mVideoView);
         mVideoView.setScreenScaleType(livePlayerManager.getLivePlayerScale());
@@ -295,6 +312,7 @@ public class LiveControlActivity extends BaseActivity {
             currentChannelItem.setSourceIndex(Math.min(sourceIndex, currentChannelItem.getSourceNum() - 1));
         }
         playCurrentChannel();
+        refreshChannelLists();
     }
 
     private void loadProxyLives(String proxyUrl) {
@@ -488,6 +506,116 @@ public class LiveControlActivity extends BaseActivity {
         updateChannelViews();
     }
 
+    private void initChannelListViews() {
+        mGroupListView.setHasFixedSize(true);
+        mGroupListView.setLayoutManager(new V7LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        liveChannelGroupAdapter = new LiveChannelGroupAdapter();
+        mGroupListView.setAdapter(liveChannelGroupAdapter);
+        liveChannelGroupAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                selectGroupAt(position);
+            }
+        });
+
+        mChannelListView.setHasFixedSize(true);
+        mChannelListView.setLayoutManager(new V7LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        liveChannelItemAdapter = new LiveChannelItemAdapter();
+        mChannelListView.setAdapter(liveChannelItemAdapter);
+        liveChannelItemAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                playChannelAt(position);
+            }
+        });
+    }
+
+    private void selectGroupAt(int position) {
+        List<LiveChannelGroup> groups = ApiConfig.get().getChannelGroupList();
+        if (groups == null || position < 0 || position >= groups.size()) return;
+        LiveChannelGroup group = groups.get(position);
+        if (!TextUtils.isEmpty(group.getGroupPassword())) {
+            Toast.makeText(this, "该分组需要密码，请在直播全屏页切换", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ArrayList<LiveChannelItem> channels = group.getLiveChannels();
+        if (channels == null || channels.isEmpty()) {
+            Toast.makeText(this, "该分组暂无频道", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        selectedGroupIndex = group.getGroupIndex();
+        liveChannelGroupAdapter.setSelectedGroupIndex(selectedGroupIndex);
+        liveChannelItemAdapter.setNewData(new ArrayList<>(channels));
+        liveChannelItemAdapter.setSelectedChannelIndex(-1);
+        mChannelListView.scrollToPosition(0);
+    }
+
+    private void playChannelAt(int position) {
+        LiveChannelGroup group = findGroupByIndex(selectedGroupIndex);
+        if (group == null) return;
+        ArrayList<LiveChannelItem> channels = group.getLiveChannels();
+        if (channels == null || position < 0 || position >= channels.size()) return;
+        currentChannelItem = channels.get(position);
+        playCurrentChannel();
+        liveChannelItemAdapter.setSelectedChannelIndex(currentChannelItem.getChannelIndex());
+    }
+
+    private LiveChannelGroup findGroupByIndex(int groupIndex) {
+        List<LiveChannelGroup> groups = ApiConfig.get().getChannelGroupList();
+        if (groups == null) return null;
+        for (LiveChannelGroup group : groups) {
+            if (group != null && group.getGroupIndex() == groupIndex) return group;
+        }
+        return null;
+    }
+
+    private void refreshChannelLists() {
+        List<LiveChannelGroup> groups = ApiConfig.get().getChannelGroupList();
+        if (groups == null) return;
+        liveChannelGroupAdapter.setNewData(new ArrayList<>(groups));
+        boolean multiGroup = groups.size() > 1;
+        mGroupListView.setVisibility(multiGroup ? View.VISIBLE : View.GONE);
+        vChannelDivider.setVisibility(multiGroup ? View.VISIBLE : View.GONE);
+
+        int groupPos = -1;
+        ArrayList<LiveChannelItem> channels = null;
+        if (currentChannelItem != null) {
+            for (int i = 0; i < groups.size(); i++) {
+                ArrayList<LiveChannelItem> list = groups.get(i).getLiveChannels();
+                if (list != null && list.contains(currentChannelItem)) {
+                    groupPos = i;
+                    channels = list;
+                    break;
+                }
+            }
+        }
+        if (channels == null) {
+            for (int i = 0; i < groups.size(); i++) {
+                LiveChannelGroup group = groups.get(i);
+                if (!TextUtils.isEmpty(group.getGroupPassword())) continue;
+                ArrayList<LiveChannelItem> list = group.getLiveChannels();
+                if (list != null && !list.isEmpty()) {
+                    groupPos = i;
+                    channels = list;
+                    break;
+                }
+            }
+        }
+        if (channels == null) {
+            liveChannelItemAdapter.setNewData(new ArrayList<>());
+            return;
+        }
+        selectedGroupIndex = groups.get(groupPos).getGroupIndex();
+        liveChannelGroupAdapter.setSelectedGroupIndex(selectedGroupIndex);
+        liveChannelItemAdapter.setNewData(new ArrayList<>(channels));
+        int channelPos = currentChannelItem == null ? -1 : channels.indexOf(currentChannelItem);
+        if (channelPos >= 0) {
+            liveChannelItemAdapter.setSelectedChannelIndex(channels.get(channelPos).getChannelIndex());
+            mChannelListView.scrollToPosition(channelPos);
+            mGroupListView.scrollToPosition(groupPos);
+        }
+    }
+
     private void updateChannelViews() {
         if (currentChannelItem == null) return;
         tvPlayerChannel.setText(currentChannelItem.getChannelName());
@@ -499,6 +627,7 @@ public class LiveControlActivity extends BaseActivity {
         if (currentChannelItem != null && channelName.equals(currentChannelItem.getChannelName())) return;
         if (findChannelByName(channelName)) {
             playCurrentChannel();
+            refreshChannelLists();
         }
     }
 

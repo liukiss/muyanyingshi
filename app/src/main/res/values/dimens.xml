@@ -2,6 +2,7 @@
 <resources>
     <!-- 手机版适配：字号按 360 竖屏基准重新标定（数值≈dp/sp），
          原 TV 值是按 1280 宽度设计的，直接沿用会放大约 3.5 倍 -->
+    <dimen name="ts_9">9mm</dimen>
     <dimen name="ts_10">10mm</dimen>
     <dimen name="ts_14">12mm</dimen>
     <dimen name="ts_16">12mm</dimen>
