@@ -194,6 +194,8 @@ public class SearchActivity extends BaseActivity {
         historyWordGrid = findViewById(R.id.historyWordGrid);
         tvHistoryClear = findViewById(R.id.tvHistoryClear);
         wordsSwitch = findViewById(R.id.wordSwitch);
+        // 先注册 LoadSir，结果区被包装成 LoadLayout；applySearchWordMode 需要一并控制包装层显隐
+        setLoadSir(llLayout);
         applySearchWordMode();
         mGridView.setHasFixedSize(true);
         // lite
@@ -349,7 +351,6 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         });
-        setLoadSir(llLayout);
         tvSearchCheckboxBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -416,7 +417,7 @@ public class SearchActivity extends BaseActivity {
         aggregateSearchMode = aggregateMode;
         if (aggregateSearchMode) {
             llHistoryWord.setVisibility(View.VISIBLE);
-            llLayout.setVisibility(View.GONE);
+            setResultAreaVisible(false);
             mGridView.setVisibility(View.GONE);
             setWordsAreaFill(true);
             setAggregateHotTitle();
@@ -426,7 +427,7 @@ public class SearchActivity extends BaseActivity {
             refreshSearchHistoryWords();
         } else {
             llHistoryWord.setVisibility(View.GONE);
-            llLayout.setVisibility(View.VISIBLE);
+            setResultAreaVisible(true);
             if (mGridView.getVisibility() == View.GONE) {
                 mGridView.setVisibility(View.INVISIBLE);
             }
@@ -435,6 +436,20 @@ public class SearchActivity extends BaseActivity {
             wordsSwitch.setFocusable(true);
             wordsSwitch.setBackgroundResource(R.drawable.shape_user_focus);
             renderHotWords();
+        }
+    }
+
+    /**
+     * 结果区（含 LoadSir 包装层）显隐。
+     * 包装层与滚动区同为 weight=1 的兄弟节点，聚合模式下若只隐藏 llLayout 本身，
+     * 包装层仍会占据下半屏并拦截触摸，导致历史标签和删除按钮点不到。
+     */
+    private void setResultAreaVisible(boolean visible) {
+        llLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+        View host = (View) llLayout.getParent();
+        View root = (View) llWordsScroll.getParent();
+        if (host != null && host != root) {
+            host.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
     }
 
