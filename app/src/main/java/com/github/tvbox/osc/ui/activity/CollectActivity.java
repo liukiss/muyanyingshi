@@ -33,6 +33,7 @@ import java.util.List;
 public class CollectActivity extends BaseActivity {
     private ImageView tvDelete;
     private ImageView tvClear;
+    private ImageView tvBack;
     private TextView tvDelTip;
     private TvRecyclerView mGridView;
     public static CollectAdapter collectAdapter;
@@ -60,6 +61,7 @@ public class CollectActivity extends BaseActivity {
         EventBus.getDefault().register(this);
         tvDelete = findViewById(R.id.tvDelete);
         tvClear = findViewById(R.id.tvClear);
+        tvBack = findViewById(R.id.tvBack);
         tvDelTip = findViewById(R.id.tvDelTip);
         mGridView = findViewById(R.id.mGridView);
         mGridView.setHasFixedSize(true);
@@ -79,12 +81,20 @@ public class CollectActivity extends BaseActivity {
                 dialog.show();
             }
         });
+        tvBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
         mGridView.setOnInBorderKeyEventListener(new TvRecyclerView.OnInBorderKeyEventListener() {
             @Override
             public boolean onInBorderKeyEvent(int direction, View focused) {
-                if (direction == View.FOCUS_UP) {
+                // 手机版：操作栏已移到底部，按向下键进入底部按钮
+                if (direction == View.FOCUS_DOWN) {
                     tvDelete.setFocusable(true);
                     tvClear.setFocusable(true);
+                    tvBack.setFocusable(true);
                     tvDelete.requestFocus();
                 }
                 return false;
