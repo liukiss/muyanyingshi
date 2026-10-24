@@ -8,8 +8,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
-
 import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
@@ -58,9 +56,6 @@ public class LiveControlActivity extends BaseActivity {
 
     private VideoView<xyz.doikki.videoplayer.player.AbstractPlayer> mVideoView;
     private ProgressBar pbLiveLoading;
-    private TextView tvChannelName;
-    private TextView tvChannelMeta;
-    private TextView tvSourceChip;
     private TextView tvPlayerChannel;
 
     private LiveChannelItem currentChannelItem;
@@ -80,9 +75,6 @@ public class LiveControlActivity extends BaseActivity {
         setLoadSir(findViewById(R.id.live_control_root));
         mVideoView = findViewById(R.id.mVideoView);
         pbLiveLoading = findViewById(R.id.pbLiveLoading);
-        tvChannelName = findViewById(R.id.tvChannelName);
-        tvChannelMeta = findViewById(R.id.tvChannelMeta);
-        tvSourceChip = findViewById(R.id.tvSourceChip);
         tvPlayerChannel = findViewById(R.id.tvPlayerChannel);
 
         livePlayerManager.init(mVideoView);
@@ -108,7 +100,7 @@ public class LiveControlActivity extends BaseActivity {
             }
         });
 
-        findViewById(R.id.btnBack).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.tvBackChip).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
@@ -122,12 +114,6 @@ public class LiveControlActivity extends BaseActivity {
             }
         });
 
-        tvSourceChip.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showSourceDialog();
-            }
-        });
         findViewById(R.id.tvLineSelectChip).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -152,10 +138,10 @@ public class LiveControlActivity extends BaseActivity {
                 showTimeoutDialog();
             }
         });
-        findViewById(R.id.tvPreferenceChip).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.tvFullscreenChip).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showPreferenceDialog();
+                openFullscreenLive();
             }
         });
         findViewById(R.id.tvMultiSourceChip).setOnClickListener(new View.OnClickListener() {
@@ -504,23 +490,7 @@ public class LiveControlActivity extends BaseActivity {
 
     private void updateChannelViews() {
         if (currentChannelItem == null) return;
-        String channelName = currentChannelItem.getChannelName();
-        String sourceName = currentSourceName();
-        tvChannelName.setText(channelName);
-        tvPlayerChannel.setText(channelName);
-        tvChannelMeta.setText("直播 · " + sourceName);
-        tvSourceChip.setText(sourceName);
-        tvSourceChip.setSelected(true);
-    }
-
-    private String currentSourceName() {
-        if (currentChannelItem == null) return "";
-        ArrayList<String> names = currentChannelItem.getChannelSourceNames();
-        int sourceIndex = currentChannelItem.getSourceIndex();
-        if (names != null && sourceIndex >= 0 && sourceIndex < names.size()) {
-            return names.get(sourceIndex);
-        }
-        return "源" + (sourceIndex + 1);
+        tvPlayerChannel.setText(currentChannelItem.getChannelName());
     }
 
     private void syncChannelFromHawk() {
@@ -555,7 +525,6 @@ public class LiveControlActivity extends BaseActivity {
         refreshGroupSelection(1, livePlayerManager.getLivePlayerScale());
         refreshGroupSelection(2, livePlayerManager.getLivePlayerType());
         refreshGroupSelection(3, Hawk.get(HawkConfig.LIVE_CONNECT_TIMEOUT, 1));
-        updatePreferenceSelection();
         refreshGroupSelection(5, ApiConfig.getLiveGroupIndex());
         refreshGroupSelection(6, getCurrentLiveApiHistoryIndex());
     }
@@ -574,23 +543,6 @@ public class LiveControlActivity extends BaseActivity {
         if (group == null || group.getLiveSettingItems() == null) return;
         for (LiveSettingItem item : group.getLiveSettingItems()) {
             item.setItemSelected(item.getItemIndex() == itemIndex);
-        }
-    }
-
-    private void updatePreferenceSelection() {
-        LiveSettingGroup group = findSettingGroup(4);
-        if (group == null || group.getLiveSettingItems() == null) return;
-        setItemSelection(group.getLiveSettingItems(), 0, Hawk.get(HawkConfig.LIVE_SHOW_TIME, false));
-        setItemSelection(group.getLiveSettingItems(), 1, Hawk.get(HawkConfig.LIVE_SHOW_NET_SPEED, false));
-        setItemSelection(group.getLiveSettingItems(), 2, Hawk.get(HawkConfig.LIVE_CHANNEL_REVERSE, false));
-        setItemSelection(group.getLiveSettingItems(), 3, Hawk.get(HawkConfig.LIVE_CROSS_GROUP, false));
-    }
-
-    private void setItemSelection(List<LiveSettingItem> items, int itemIndex, boolean selected) {
-        for (LiveSettingItem item : items) {
-            if (item.getItemIndex() == itemIndex) {
-                item.setItemSelected(selected);
-            }
         }
     }
 
@@ -729,37 +681,6 @@ public class LiveControlActivity extends BaseActivity {
                         refreshGroupSelection(3, itemIndex);
                     }
                 });
-    }
-
-    private void showPreferenceDialog() {
-        final String[] names = new String[]{"显示时间", "显示网速", "换台反转", "跨选分类"};
-        final boolean[] checked = new boolean[]{
-                Hawk.get(HawkConfig.LIVE_SHOW_TIME, false),
-                Hawk.get(HawkConfig.LIVE_SHOW_NET_SPEED, false),
-                Hawk.get(HawkConfig.LIVE_CHANNEL_REVERSE, false),
-                Hawk.get(HawkConfig.LIVE_CROSS_GROUP, false)
-        };
-        new AlertDialog.Builder(this)
-                .setTitle("偏好设置")
-                .setMultiChoiceItems(names, checked, (dialog, which, isChecked) -> {
-                    switch (which) {
-                        case 0:
-                            Hawk.put(HawkConfig.LIVE_SHOW_TIME, isChecked);
-                            break;
-                        case 1:
-                            Hawk.put(HawkConfig.LIVE_SHOW_NET_SPEED, isChecked);
-                            break;
-                        case 2:
-                            Hawk.put(HawkConfig.LIVE_CHANNEL_REVERSE, isChecked);
-                            break;
-                        case 3:
-                            Hawk.put(HawkConfig.LIVE_CROSS_GROUP, isChecked);
-                            break;
-                    }
-                    updatePreferenceSelection();
-                })
-                .setPositiveButton("完成", null)
-                .show();
     }
 
     private void showMultiSourceDialog() {

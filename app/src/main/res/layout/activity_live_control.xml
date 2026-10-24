@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/live_control_root"
     android:layout_width="match_parent"
@@ -40,22 +41,6 @@
                 android:focusable="false" />
 
             <TextView
-                android:id="@+id/btnBack"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/vs_30"
-                android:layout_gravity="top|start"
-                android:layout_margin="@dimen/vs_10"
-                android:background="@drawable/shape_live_control_btn"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingLeft="@dimen/vs_12"
-                android:paddingRight="@dimen/vs_12"
-                android:text="返回"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/ts_14" />
-
-            <TextView
                 android:id="@+id/tvPlayerChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -70,213 +55,173 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/ts_22"
                 tools:text="CCTV1" />
-
-            <TextView
-                android:id="@+id/tvFullscreenHint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="@dimen/vs_10"
-                android:background="@drawable/shape_live_control_btn"
-                android:focusable="false"
-                android:paddingLeft="@dimen/vs_8"
-                android:paddingRight="@dimen/vs_8"
-                android:paddingTop="@dimen/vs_2"
-                android:paddingBottom="@dimen/vs_2"
-                android:text="点击全屏"
-                android:textColor="@color/color_CCFFFFFF"
-                android:textSize="@dimen/ts_10" />
         </FrameLayout>
 
-        <!-- 频道信息区 -->
-        <LinearLayout
+        <!-- 中间留白区域 -->
+        <View
             android:layout_width="match_parent"
             android:layout_height="@dimen/vs_0"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="@dimen/vs_12">
+            android:layout_weight="1" />
 
-            <TextView
-                android:id="@+id/tvChannelName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:focusable="false"
-                android:singleLine="true"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/ts_24"
-                tools:text="CCTV1 综合" />
-
-            <TextView
-                android:id="@+id/tvChannelMeta"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/vs_4"
-                android:ellipsize="end"
-                android:focusable="false"
-                android:singleLine="true"
-                android:textColor="@color/color_CCFFFFFF"
-                android:textSize="@dimen/ts_14"
-                tools:text="直播 · 源1" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/vs_10"
-                android:focusable="false"
-                android:lineSpacingMultiplier="1.3"
-                android:text="点击上方画面进入全屏直播；使用下方按钮切换直播线路、画面比例与播放解码等设置。"
-                android:textColor="@color/color_CCFFFFFF"
-                android:textSize="@dimen/ts_14" />
-        </LinearLayout>
-
-        <!-- 底部控制区 -->
+        <!-- 底部控制区：所有按钮同行等宽 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_live_control_bottom"
-            android:orientation="vertical"
-            android:padding="@dimen/vs_8">
+            android:orientation="horizontal"
+            android:padding="@dimen/vs_6">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvBackChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="点击返回"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
 
-                <TextView
-                    android:id="@+id/tvSourceChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="源1"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvLineSelectChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="线路选择"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
 
-                <TextView
-                    android:id="@+id/tvLineSelectChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="线路选择"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvScaleChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="画面比例"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
 
-                <TextView
-                    android:id="@+id/tvScaleChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="画面比例"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvDecoderChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="播放解码"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
 
-                <TextView
-                    android:id="@+id/tvDecoderChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="播放解码"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
-            </LinearLayout>
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvTimeoutChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="超时换源"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvFullscreenChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="点击全屏"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
 
-                <TextView
-                    android:id="@+id/tvTimeoutChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="超时换源"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvMultiSourceChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="多源切换"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
 
-                <TextView
-                    android:id="@+id/tvPreferenceChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="偏好设置"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
-
-                <TextView
-                    android:id="@+id/tvMultiSourceChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="多源切换"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
-
-                <TextView
-                    android:id="@+id/tvConfigChip"
-                    android:layout_width="@dimen/vs_0"
-                    android:layout_height="@dimen/vs_36"
-                    android:layout_weight="1"
-                    android:layout_margin="@dimen/vs_2"
-                    android:background="@drawable/shape_live_control_btn"
-                    android:clickable="true"
-                    android:ellipsize="end"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="配置切换"
-                    android:textColor="@android:color/white"
-                    android:textSize="@dimen/ts_16" />
-            </LinearLayout>
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvConfigChip"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="@dimen/vs_36"
+                android:layout_margin="@dimen/vs_1"
+                android:layout_weight="1"
+                android:background="@drawable/shape_live_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="配置切换"
+                android:textColor="@android:color/white"
+                app:autoSizeMaxTextSize="12sp"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
