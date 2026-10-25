@@ -1,9 +1,12 @@
 package com.github.tvbox.osc.ui.activity;
 
+import android.annotation.SuppressLint;
 import android.net.Uri;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +18,7 @@ import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.base.BaseActivity;
+import com.github.tvbox.osc.bean.Epginfo;
 import com.github.tvbox.osc.bean.LiveChannelGroup;
 import com.github.tvbox.osc.bean.LiveChannelItem;
 import com.github.tvbox.osc.bean.LivePlayerManager;
@@ -24,8 +28,12 @@ import com.github.tvbox.osc.ui.adapter.LiveChannelGroupAdapter;
 import com.github.tvbox.osc.ui.adapter.LiveChannelItemAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.dialog.SelectDialog;
+import com.github.tvbox.osc.util.DefaultConfig;
+import com.github.tvbox.osc.util.EpgUtil;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.HistoryHelper;
+import com.github.tvbox.osc.util.ImgUtil;
+import com.github.tvbox.osc.util.OkGoHelper;
 import com.github.tvbox.osc.util.live.TxtSubscribe;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -36,10 +44,29 @@ import com.orhanobut.hawk.Hawk;
 import com.owen.tvrecyclerview.widget.TvRecyclerView;
 import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URLEncoder;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -47,6 +74,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import xyz.doikki.videoplayer.exo.ExoMediaSourceHelper;
 import xyz.doikki.videoplayer.player.VideoView;
@@ -63,7 +95,15 @@ public class LiveControlActivity extends BaseActivity {
 
     private VideoView<xyz.doikki.videoplayer.player.AbstractPlayer> mVideoView;
     private ProgressBar pbLiveLoading;
-    private TextView tvPlayerChannel;
+    private ImageView ivEpgChannelLogo;
+    private TextView tvEpgChannelFallback;
+    private TextView tvEpgChannelName;
+    private TextView tvEpgCurrentTime;
+    private TextView tvEpgCurrentName;
+    private TextView tvEpgNextTime;
+    private TextView tvEpgNextName;
+    private TextView tvEpgSource;
+    private TextView tvEpgResolution;
     private View vChannelDivider;
     private TvRecyclerView mGroupListView;
     private TvRecyclerView mChannelListView;
@@ -78,6 +118,18 @@ public class LiveControlActivity extends BaseActivity {
     private String pendingChannelName;
     private int pendingSourceIndex = -1;
 
+    private static final String DEFAULT_EPG_ADDRESS = "http://epg.51zmt.top:8000/api/diyp/?ch={name}&date={date}";
+    private static final Hashtable<String, ArrayList<Epginfo>> EPG_CACHE = new Hashtable<>();
+    private final Handler mHandler = new Handler();
+    private int resolutionRetryCount = 0;
+    private boolean resolutionPending = false;
+    private final Runnable mUpdateResolutionRun = new Runnable() {
+        @Override
+        public void run() {
+            updateResolutionInfo();
+        }
+    };
+
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_live_control;
@@ -88,7 +140,15 @@ public class LiveControlActivity extends BaseActivity {
         setLoadSir(findViewById(R.id.live_control_root));
         mVideoView = findViewById(R.id.mVideoView);
         pbLiveLoading = findViewById(R.id.pbLiveLoading);
-        tvPlayerChannel = findViewById(R.id.tvPlayerChannel);
+        ivEpgChannelLogo = findViewById(R.id.ivEpgChannelLogo);
+        tvEpgChannelFallback = findViewById(R.id.tvEpgChannelFallback);
+        tvEpgChannelName = findViewById(R.id.tvEpgChannelName);
+        tvEpgCurrentTime = findViewById(R.id.tvEpgCurrentTime);
+        tvEpgCurrentName = findViewById(R.id.tvEpgCurrentName);
+        tvEpgNextTime = findViewById(R.id.tvEpgNextTime);
+        tvEpgNextName = findViewById(R.id.tvEpgNextName);
+        tvEpgSource = findViewById(R.id.tvEpgSource);
+        tvEpgResolution = findViewById(R.id.tvEpgResolution);
         vChannelDivider = findViewById(R.id.vChannelDivider);
         mGroupListView = findViewById(R.id.mGroupListView);
         mChannelListView = findViewById(R.id.mChannelListView);
@@ -107,6 +167,9 @@ public class LiveControlActivity extends BaseActivity {
                     case VideoView.STATE_PREPARED:
                     case VideoView.STATE_BUFFERED:
                     case VideoView.STATE_PLAYING:
+                        showPlayerLoading(false);
+                        scheduleResolutionUpdate();
+                        break;
                     case VideoView.STATE_PAUSED:
                     case VideoView.STATE_PLAYBACK_COMPLETED:
                     case VideoView.STATE_ERROR:
@@ -181,6 +244,9 @@ public class LiveControlActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // 从横屏全屏直播页返回时，AutoSize 基准还停留在横屏尺寸，
+        // 若此时刷新频道列表，列表项会按横屏比例重新膨胀。这里先恢复本页竖屏基准。
+        refreshAutoSize();
         if (mVideoView == null || currentChannelItem == null) return;
         syncChannelFromHawk();
         Hawk.put(HawkConfig.PLAYER_IS_LIVE, true);
@@ -203,6 +269,7 @@ public class LiveControlActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         Hawk.put(HawkConfig.PLAYER_IS_LIVE, false);
+        mHandler.removeCallbacksAndMessages(null);
         if (mVideoView != null) {
             mVideoView.release();
         }
@@ -503,7 +570,7 @@ public class LiveControlActivity extends BaseActivity {
         mVideoView.release();
         mVideoView.setUrl(currentChannelItem.getUrl(), liveChannelHeader());
         mVideoView.start();
-        updateChannelViews();
+        updateProgramInfo();
     }
 
     private void initChannelListViews() {
@@ -616,9 +683,475 @@ public class LiveControlActivity extends BaseActivity {
         }
     }
 
-    private void updateChannelViews() {
+    private void updateProgramInfo() {
         if (currentChannelItem == null) return;
-        tvPlayerChannel.setText(currentChannelItem.getChannelName());
+        String channelName = currentChannelItem.getChannelName();
+        tvEpgChannelName.setText(channelName);
+        tvEpgSource.setText(currentChannelItem.getSourceNum() > 0
+                ? "线路" + (currentChannelItem.getSourceIndex() + 1) + "/" + currentChannelItem.getSourceNum()
+                : "1/1");
+        updateChannelLogo();
+        showDefaultPrograms();
+        loadEpg(channelName);
+        resetResolutionInfo();
+    }
+
+    private void updateChannelLogo() {
+        String channelNameReal = normalizeEpgChannelName(getFirstPartBeforeSpace(currentChannelItem.getChannelName()));
+        String[] epgInfo = EpgUtil.getEpgInfo(channelNameReal);
+        String epgTagName = epgInfo != null && epgInfo.length > 1 && !TextUtils.isEmpty(epgInfo[1]) ? epgInfo[1] : channelNameReal;
+        String logoUrl = currentChannelItem.getChannelLogo();
+        if (TextUtils.isEmpty(logoUrl)) {
+            logoUrl = epgInfo == null ? null : epgInfo[0];
+        } else if (!"false".equals(logoUrl)) {
+            logoUrl = logoUrl.replace("{name}", epgTagName);
+        } else {
+            logoUrl = null;
+        }
+        if (TextUtils.isEmpty(logoUrl)) {
+            ivEpgChannelLogo.setVisibility(View.GONE);
+            tvEpgChannelFallback.setVisibility(View.VISIBLE);
+            tvEpgChannelFallback.setText(String.valueOf(currentChannelItem.getChannelNum()));
+        } else {
+            ivEpgChannelLogo.setVisibility(View.VISIBLE);
+            tvEpgChannelFallback.setVisibility(View.GONE);
+            ImgUtil.load(DefaultConfig.checkReplaceProxy(logoUrl), ivEpgChannelLogo, 1, 0, 0,
+                    currentChannelItem.getChannelName(), ImageView.ScaleType.CENTER_INSIDE);
+        }
+    }
+
+    private void showDefaultPrograms() {
+        TimeZone timeZone = TimeZone.getTimeZone("GMT+8:00");
+        Calendar calendar = Calendar.getInstance(timeZone);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        Date start = calendar.getTime();
+        calendar.add(Calendar.MINUTE, 59);
+        Date end = calendar.getTime();
+        calendar.add(Calendar.MINUTE, 1);
+        Date nextStart = calendar.getTime();
+        calendar.add(Calendar.MINUTE, 59);
+        Date nextEnd = calendar.getTime();
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        timeFormat.setTimeZone(timeZone);
+        tvEpgCurrentTime.setText(timeFormat.format(start) + "-" + timeFormat.format(end));
+        tvEpgCurrentName.setText("精彩节目");
+        tvEpgNextTime.setText(timeFormat.format(nextStart) + "-" + timeFormat.format(nextEnd));
+        tvEpgNextName.setText("暂无节目预告信息");
+    }
+
+    private void loadEpg(final String channelName) {
+        final String channelNameReal = normalizeEpgChannelName(getFirstPartBeforeSpace(channelName));
+        SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+        final String dateKey = timeFormat.format(new Date());
+        final String cacheKey = channelName + "_" + dateKey;
+        ArrayList<Epginfo> cached = EPG_CACHE.get(cacheKey);
+        if (cached != null) {
+            showEpgPrograms(channelName, cached);
+            return;
+        }
+        String epgTagName = channelNameReal;
+        String[] epgInfo = EpgUtil.getEpgInfo(channelNameReal);
+        if (epgInfo != null && epgInfo.length > 1 && !TextUtils.isEmpty(epgInfo[1])) {
+            epgTagName = epgInfo[1];
+        }
+        String address = Hawk.get(HawkConfig.EPG_URL, "");
+        if (TextUtils.isEmpty(address) || address.trim().length() < 5) {
+            address = DEFAULT_EPG_ADDRESS;
+        }
+        final String finalEpgTagName = epgTagName;
+        final String url = buildEpgUrl(address.trim(), epgTagName, dateKey);
+        okhttp3.OkHttpClient client = OkGoHelper.getDefaultClient();
+        if (client == null) client = com.github.catvod.net.OkHttp.client();
+        client.newCall(new okhttp3.Request.Builder().url(url).build()).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, IOException e) {
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
+                if (response.code() != 200) {
+                    response.close();
+                    return;
+                }
+                final String body;
+                try {
+                    body = response.body() != null ? response.body().string() : "";
+                } finally {
+                    response.close();
+                }
+                final ArrayList<Epginfo> list = parseEpg(body, dateKey, finalEpgTagName);
+                EPG_CACHE.put(cacheKey, list);
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isFinishing() || currentChannelItem == null) return;
+                        if (!channelName.equals(currentChannelItem.getChannelName())) return;
+                        showEpgPrograms(channelName, list);
+                    }
+                });
+            }
+        });
+    }
+
+    private ArrayList<Epginfo> parseEpg(String body, String dateKey, String epgTagName) {
+        ArrayList<Epginfo> list = new ArrayList<>();
+        if (TextUtils.isEmpty(body)) return list;
+        Date date = parseEpgDate(dateKey);
+        try {
+            if (isXmlEpgResponse(body)) {
+                list = parseXmlEpg(body, epgTagName, date);
+            } else if (body.contains("epg_data") || body.trim().startsWith("{")) {
+                list = parseJsonEpg(body, date);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    private Date parseEpgDate(String dateKey) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+            return dateFormat.parse(dateKey);
+        } catch (ParseException e) {
+            return new Date();
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void showEpgPrograms(String channelName, ArrayList<Epginfo> list) {
+        if (currentChannelItem == null || !channelName.equals(currentChannelItem.getChannelName())) return;
+        if (list == null || list.isEmpty()) return;
+        Date now = new Date();
+        int currentIndex = -1;
+        for (int i = 0; i < list.size(); i++) {
+            Epginfo info = list.get(i);
+            if (info == null || info.startdateTime == null || info.enddateTime == null) continue;
+            if (!now.before(info.startdateTime) && now.before(info.enddateTime)) {
+                currentIndex = i;
+                break;
+            }
+        }
+        if (currentIndex < 0) return;
+        Epginfo current = list.get(currentIndex);
+        tvEpgCurrentTime.setText(current.start + "-" + current.end);
+        tvEpgCurrentName.setText(cleanEpgTitle(current.title));
+        if (currentIndex + 1 < list.size()) {
+            Epginfo next = list.get(currentIndex + 1);
+            tvEpgNextTime.setText(next.start + "-" + next.end);
+            tvEpgNextName.setText(cleanEpgTitle(next.title));
+        } else {
+            tvEpgNextTime.setText(current.end + "-23:59");
+            tvEpgNextName.setText("暂无节目预告信息");
+        }
+    }
+
+    private ArrayList<Epginfo> parseJsonEpg(String response, Date date) throws JSONException {
+        ArrayList<Epginfo> epgList = new ArrayList<>();
+        JSONObject jsonObject = new JSONObject(response);
+        String channelName = jsonObject.optString("channel_name", jsonObject.optString("channel", ""));
+        if (isUnavailableEpgText(channelName)) {
+            return epgList;
+        }
+        JSONArray epgArray = findJsonEpgArray(jsonObject);
+        if (epgArray == null) {
+            return epgList;
+        }
+        for (int i = 0; i < epgArray.length(); i++) {
+            JSONObject item = epgArray.optJSONObject(i);
+            if (item == null) {
+                continue;
+            }
+            String title = cleanEpgTitle(item.optString("title", item.optString("name", "")));
+            if (TextUtils.isEmpty(title) || isUnavailableEpgText(title)) {
+                continue;
+            }
+            String startText = item.optString("start", item.optString("start_time", item.optString("starttime", "")));
+            String endText = item.optString("end", item.optString("end_time", item.optString("endtime", "")));
+            Date startDate = parseJsonEpgDate(date, startText);
+            Date endDate = parseJsonEpgDate(date, endText);
+            if (startDate == null || endDate == null) {
+                continue;
+            }
+            if (!endDate.after(startDate)) {
+                endDate = new Date(endDate.getTime() + TimeUnit.DAYS.toMillis(1));
+            }
+            epgList.add(createXmlEpgInfo(date, title, startDate, endDate, epgList.size()));
+        }
+        return epgList;
+    }
+
+    private JSONArray findJsonEpgArray(JSONObject jsonObject) {
+        JSONArray epgArray = jsonObject.optJSONArray("epg_data");
+        if (epgArray != null) return epgArray;
+        epgArray = jsonObject.optJSONArray("data");
+        if (epgArray != null) return epgArray;
+        epgArray = jsonObject.optJSONArray("list");
+        if (epgArray != null) return epgArray;
+        JSONObject dataObject = jsonObject.optJSONObject("data");
+        if (dataObject != null) {
+            epgArray = dataObject.optJSONArray("epg_data");
+            if (epgArray != null) return epgArray;
+            epgArray = dataObject.optJSONArray("list");
+        }
+        return epgArray;
+    }
+
+    private Date parseJsonEpgDate(Date date, String timeText) {
+        if (timeText == null || timeText.trim().isEmpty()) {
+            return null;
+        }
+        String trimText = timeText.trim();
+        String[] fullPatterns = new String[]{"yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm"};
+        for (String pattern : fullPatterns) {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
+                dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+                return dateFormat.parse(trimText);
+            } catch (ParseException ignored) {
+            }
+        }
+        SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        dayFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+        String dayText = dayFormat.format(date);
+        String[] timePatterns = new String[]{"HH:mm:ss", "HH:mm"};
+        for (String pattern : timePatterns) {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd " + pattern, Locale.getDefault());
+                dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+                return dateFormat.parse(dayText + " " + trimText);
+            } catch (ParseException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private String cleanEpgTitle(String title) {
+        if (title == null) {
+            return "";
+        }
+        return title.replace(" --免费使用", "")
+                .replace("--免费使用", "")
+                .trim();
+    }
+
+    private boolean isUnavailableEpgText(String text) {
+        return text != null && (text.contains("未提供") || text.contains("暂无"));
+    }
+
+    private ArrayList<Epginfo> parseXmlEpg(String xml, String channelName, Date date) {
+        ArrayList<Epginfo> epgList = new ArrayList<>();
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setIgnoringComments(true);
+            factory.setCoalescing(true);
+            try {
+                factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            } catch (Exception ignored) {
+            }
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            builder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
+            Document document = builder.parse(new InputSource(new StringReader(xml)));
+            document.getDocumentElement().normalize();
+
+            String targetName = normalizeEpgChannelName(channelName);
+            ArrayList<String> channelIds = new ArrayList<>();
+            NodeList channelNodes = document.getElementsByTagName("channel");
+            for (int i = 0; i < channelNodes.getLength(); i++) {
+                Node channelNode = channelNodes.item(i);
+                if (channelNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                Element channelElement = (Element) channelNode;
+                String channelId = channelElement.getAttribute("id");
+                if (targetName.equals(normalizeEpgChannelName(channelId))) {
+                    channelIds.add(channelId);
+                    continue;
+                }
+                NodeList displayNameNodes = channelElement.getElementsByTagName("display-name");
+                for (int j = 0; j < displayNameNodes.getLength(); j++) {
+                    String displayName = displayNameNodes.item(j).getTextContent();
+                    if (targetName.equals(normalizeEpgChannelName(displayName))) {
+                        channelIds.add(channelId);
+                        break;
+                    }
+                }
+            }
+
+            Date dayStart = getDayStart(date);
+            Date dayEnd = new Date(dayStart.getTime() + TimeUnit.DAYS.toMillis(1));
+            NodeList programmeNodes = document.getElementsByTagName("programme");
+            for (int i = 0; i < programmeNodes.getLength(); i++) {
+                Node programmeNode = programmeNodes.item(i);
+                if (programmeNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                Element programmeElement = (Element) programmeNode;
+                String programmeChannel = programmeElement.getAttribute("channel");
+                if (!channelIds.contains(programmeChannel) && !targetName.equals(normalizeEpgChannelName(programmeChannel))) {
+                    continue;
+                }
+
+                Date startDate = parseXmlTvDate(programmeElement.getAttribute("start"));
+                Date endDate = parseXmlTvDate(programmeElement.getAttribute("stop"));
+                if (startDate == null || endDate == null || !endDate.after(startDate)) {
+                    continue;
+                }
+                if (!startDate.before(dayEnd) || !endDate.after(dayStart)) {
+                    continue;
+                }
+
+                String title = "";
+                NodeList titleNodes = programmeElement.getElementsByTagName("title");
+                if (titleNodes.getLength() > 0) {
+                    title = titleNodes.item(0).getTextContent();
+                }
+                epgList.add(createXmlEpgInfo(date, title, startDate, endDate, epgList.size()));
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+        return epgList;
+    }
+
+    private Date getDayStart(Date date) throws ParseException {
+        SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        dayFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+        return dayFormat.parse(dayFormat.format(date));
+    }
+
+    private Date parseXmlTvDate(String dateText) {
+        if (dateText == null || dateText.trim().isEmpty()) {
+            return null;
+        }
+        String trimDate = dateText.trim();
+        try {
+            return new SimpleDateFormat("yyyyMMddHHmmss Z", Locale.getDefault()).parse(trimDate);
+        } catch (ParseException ignored) {
+        }
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+            dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+            return dateFormat.parse(trimDate);
+        } catch (ParseException ignored) {
+        }
+        return null;
+    }
+
+    private Epginfo createXmlEpgInfo(Date epgDate, String title, Date startDate, Date endDate, int index) {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        Epginfo epgInfo = new Epginfo(epgDate, title, epgDate, timeFormat.format(startDate), timeFormat.format(endDate), index);
+        epgInfo.startdateTime = startDate;
+        epgInfo.enddateTime = endDate;
+        epgInfo.start = timeFormat.format(startDate);
+        epgInfo.end = timeFormat.format(endDate);
+        epgInfo.originStart = epgInfo.start;
+        epgInfo.originEnd = epgInfo.end;
+        epgInfo.datestart = Integer.parseInt(epgInfo.start.replace(":", ""));
+        epgInfo.dateend = Integer.parseInt(epgInfo.end.replace(":", ""));
+        return epgInfo;
+    }
+
+    private String normalizeEpgChannelName(String channelName) {
+        if (channelName == null) {
+            return "";
+        }
+        String trimName = channelName.trim();
+        String compactName = trimName.replace("-", "").replace(" ", "");
+        Matcher cctvMatcher = Pattern.compile("(?i)^(CCTV\\d+(?:\\+|K)?)(?:[\\u4e00-\\u9fa5].*|$)").matcher(compactName);
+        if (cctvMatcher.matches()) {
+            return cctvMatcher.group(1).toUpperCase(Locale.ROOT);
+        }
+        if (compactName.toUpperCase(Locale.ROOT).startsWith("CCTV")) {
+            return compactName.toUpperCase(Locale.ROOT);
+        }
+        return trimName;
+    }
+
+    private String getFirstPartBeforeSpace(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        int spaceIndex = str.indexOf(' ');
+        if (spaceIndex == -1) {
+            return str;
+        } else {
+            return str.substring(0, spaceIndex);
+        }
+    }
+
+    private boolean isXmlEpgAddress(String address) {
+        if (address == null) {
+            return false;
+        }
+        String lowerAddress = address.toLowerCase(Locale.ROOT);
+        int queryIndex = lowerAddress.indexOf("?");
+        if (queryIndex >= 0) {
+            lowerAddress = lowerAddress.substring(0, queryIndex);
+        }
+        return lowerAddress.endsWith(".xml");
+    }
+
+    private boolean isXmlEpgResponse(String response) {
+        if (response == null) {
+            return false;
+        }
+        String trimResponse = response.trim();
+        return trimResponse.startsWith("<?xml") || trimResponse.startsWith("<tv") || trimResponse.contains("<programme");
+    }
+
+    private String buildEpgUrl(String address, String epgTagName, String date) {
+        if (address.contains("{name}") || address.contains("{date}")) {
+            return address.replace("{name}", encodeEpgParam(epgTagName)).replace("{date}", date);
+        } else if (isXmlEpgAddress(address)) {
+            return address;
+        } else {
+            return address + (address.contains("?") ? "&" : "?") + "ch=" + encodeEpgParam(epgTagName) + "&date=" + date;
+        }
+    }
+
+    private String encodeEpgParam(String value) {
+        try {
+            return URLEncoder.encode(value == null ? "" : value, "UTF-8").replace("+", "%20");
+        } catch (Exception e) {
+            return value == null ? "" : value;
+        }
+    }
+
+    private void resetResolutionInfo() {
+        resolutionPending = true;
+        resolutionRetryCount = 0;
+        mHandler.removeCallbacks(mUpdateResolutionRun);
+        if (tvEpgResolution != null) {
+            tvEpgResolution.setVisibility(View.GONE);
+        }
+        mHandler.postDelayed(mUpdateResolutionRun, 300);
+    }
+
+    private void scheduleResolutionUpdate() {
+        if (!resolutionPending) return;
+        mHandler.removeCallbacks(mUpdateResolutionRun);
+        mHandler.post(mUpdateResolutionRun);
+    }
+
+    private void updateResolutionInfo() {
+        if (mVideoView == null || tvEpgResolution == null) return;
+        if (!resolutionPending) return;
+        int[] size = mVideoView.getVideoSize();
+        if (size != null && size.length >= 2 && size[0] > 0 && size[1] > 0) {
+            resolutionPending = false;
+            tvEpgResolution.setText(size[0] + " x " + size[1]);
+            tvEpgResolution.setVisibility(View.VISIBLE);
+        } else if (resolutionRetryCount++ < 10) {
+            mHandler.postDelayed(mUpdateResolutionRun, 300);
+        } else {
+            resolutionPending = false;
+        }
     }
 
     private void syncChannelFromHawk() {

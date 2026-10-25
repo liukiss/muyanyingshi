@@ -165,7 +165,7 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         decorView.postDelayed(refreshAutoSizeRunnable, 300);
     }
 
-    private void refreshAutoSize() {
+    protected void refreshAutoSize() {
         try {
             DisplayMetrics dm = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(dm);
