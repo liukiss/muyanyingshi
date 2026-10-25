@@ -2,8 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="@dimen/vs_20"
-    android:layout_marginRight="@dimen/vs_20"
+    android:layout_marginLeft="@dimen/vs_12"
+    android:layout_marginRight="@dimen/vs_12"
     android:background="@drawable/bg_dialog_rounded"
     android:elevation="@dimen/vs_5"
     android:padding="@dimen/vs_10">
@@ -11,7 +11,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxHeight="@dimen/vs_320"
+        android:maxHeight="@dimen/vs_180"
         android:background="@drawable/bg_scrollview"
         android:fillViewport="true"
         android:scrollbarStyle="insideOverlay"
@@ -22,9 +22,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:lineSpacingExtra="@dimen/vs_4"
-            android:padding="@dimen/vs_20"
+            android:padding="@dimen/vs_12"
             android:textColor="@color/color_text_primary"
-            android:textSize="@dimen/ts_24"
+            android:textSize="@dimen/ts_14"
             android:focusable="true"
             android:focusableInTouchMode="true" />
 

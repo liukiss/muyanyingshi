@@ -9,23 +9,23 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginLeft="@dimen/vs_20"
-        android:layout_marginRight="@dimen/vs_20"
+        android:layout_marginLeft="@dimen/vs_12"
+        android:layout_marginRight="@dimen/vs_12"
         android:background="@drawable/shape_danmu_setting_bg"
         android:orientation="vertical"
-        android:padding="@dimen/vs_35">
+        android:padding="@dimen/vs_16">
 
         <ImageView
             android:id="@+id/ivQRCode"
-            android:layout_width="@dimen/vs_200"
-            android:layout_height="@dimen/vs_200"
+            android:layout_width="@dimen/vs_160"
+            android:layout_height="@dimen/vs_160"
             android:layout_gravity="center_horizontal"
             android:focusable="false" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/vs_20"
+            android:layout_marginTop="@dimen/vs_16"
             android:orientation="vertical">
 
             <TextView
@@ -35,7 +35,7 @@
                 android:layout_marginBottom="@dimen/vs_8"
                 android:lineSpacingMultiplier="1.5"
                 android:textColor="@color/dialog_text_primary"
-                android:textSize="@dimen/ts_24"
+                android:textSize="@dimen/ts_14"
                 tools:text="1111111111111111111111111111111111111111111111111111" />
 
             <!-- 配置历史与存储权限 -->
@@ -48,7 +48,7 @@
                 <TextView
                     android:id="@+id/apiHistory"
                     android:layout_width="0dp"
-                    android:layout_height="@dimen/vs_50"
+                    android:layout_height="@dimen/vs_30"
                     android:layout_weight="1"
                     android:layout_marginEnd="@dimen/vs_5"
                     android:background="@drawable/button_danmu_setting"
@@ -56,13 +56,13 @@
                     android:gravity="center"
                     android:text="历史直播"
                     android:textColor="@color/dialog_text_primary"
-                    android:textSize="@dimen/ts_22"
+                    android:textSize="@dimen/ts_14"
                     android:layout_marginRight="@dimen/vs_5" />
 
                 <TextView
                     android:id="@+id/storagePermission"
                     android:layout_width="0dp"
-                    android:layout_height="@dimen/vs_50"
+                    android:layout_height="@dimen/vs_30"
                     android:layout_weight="1"
                     android:layout_marginStart="@dimen/vs_5"
                     android:background="@drawable/button_danmu_setting"
@@ -70,7 +70,7 @@
                     android:gravity="center"
                     android:text="存储权限"
                     android:textColor="@color/dialog_text_primary"
-                    android:textSize="@dimen/ts_22"
+                    android:textSize="@dimen/ts_14"
                     android:layout_marginLeft="@dimen/vs_5" />
             </LinearLayout>
 
@@ -90,7 +90,7 @@
                     android:paddingRight="@dimen/vs_5"
                     android:text="点播"
                     android:textColor="@color/dialog_text_primary"
-                    android:textSize="@dimen/ts_22"
+                    android:textSize="@dimen/ts_14"
                     android:paddingEnd="@dimen/vs_5"
                     android:cursorVisible="false"
                     tools:ignore="RtlSymmetry,TextViewEdits" />
@@ -104,23 +104,23 @@
                     android:hint="请输入配置地址"
                     android:imeOptions="actionNext|flagNoExtractUi"
                     android:inputType="text"
-                    android:minHeight="@dimen/vs_50"
+                    android:minHeight="@dimen/vs_30"
                     android:nextFocusDown="@id/inputLive"
                     android:nextFocusForward="@id/inputLive"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:paddingLeft="@dimen/vs_2"
-                    android:paddingTop="@dimen/vs_10"
+                    android:paddingTop="@dimen/vs_6"
                     android:paddingRight="@dimen/vs_2"
-                    android:paddingBottom="@dimen/vs_10"
+                    android:paddingBottom="@dimen/vs_6"
                     android:textColor="@color/dialog_text_primary"
                     android:textColorHint="@color/dialog_text_hint"
-                    android:textSize="@dimen/ts_26" />
+                    android:textSize="@dimen/ts_14" />
 
                 <TextView
                     android:id="@+id/inputSubmit"
                     android:layout_width="wrap_content"
-                    android:layout_height="@dimen/vs_50"
+                    android:layout_height="@dimen/vs_30"
                     android:layout_gravity="center"
                     android:layout_marginStart="@dimen/vs_5"
                     android:background="@drawable/button_danmu_setting"
@@ -130,7 +130,7 @@
                     android:paddingRight="@dimen/vs_10"
                     android:text="选择"
                     android:textColor="@color/dialog_text_primary"
-                    android:textSize="@dimen/ts_22"
+                    android:textSize="@dimen/ts_14"
                     android:layout_marginLeft="@dimen/vs_5" />
             </LinearLayout>
 
@@ -150,7 +150,7 @@
                     android:paddingRight="@dimen/vs_5"
                     android:text="直播"
                     android:textColor="@color/dialog_text_primary"
-                    android:textSize="@dimen/ts_22"
+                    android:textSize="@dimen/ts_14"
                     android:paddingEnd="@dimen/vs_5"
                     android:cursorVisible="false"
                     tools:ignore="RtlSymmetry,TextViewEdits" />
@@ -164,23 +164,23 @@
                     android:hint="请输入直播地址"
                     android:imeOptions="actionDone|flagNoExtractUi"
                     android:inputType="text"
-                    android:minHeight="@dimen/vs_50"
+                    android:minHeight="@dimen/vs_30"
                     android:nextFocusDown="@id/inputConfirm"
                     android:nextFocusForward="@id/inputConfirm"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:paddingLeft="@dimen/vs_2"
-                    android:paddingTop="@dimen/vs_10"
+                    android:paddingTop="@dimen/vs_6"
                     android:paddingRight="@dimen/vs_2"
-                    android:paddingBottom="@dimen/vs_10"
+                    android:paddingBottom="@dimen/vs_6"
                     android:textColor="@color/dialog_text_primary"
                     android:textColorHint="@color/dialog_text_hint"
-                    android:textSize="@dimen/ts_26" />
+                    android:textSize="@dimen/ts_14" />
 
                 <TextView
                     android:id="@+id/inputSubmitLive"
                     android:layout_width="wrap_content"
-                    android:layout_height="@dimen/vs_50"
+                    android:layout_height="@dimen/vs_30"
                     android:layout_gravity="center"
                     android:layout_marginStart="@dimen/vs_5"
                     android:background="@drawable/button_danmu_setting"
@@ -190,29 +190,29 @@
                     android:paddingRight="@dimen/vs_10"
                     android:text="选择"
                     android:textColor="@color/dialog_text_primary"
-                    android:textSize="@dimen/ts_22"
+                    android:textSize="@dimen/ts_14"
                     android:layout_marginLeft="@dimen/vs_5" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/vs_20"
+                android:layout_marginTop="@dimen/vs_16"
                 android:gravity="right"
                 android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/inputConfirm"
                     android:layout_width="wrap_content"
-                    android:layout_height="@dimen/vs_50"
+                    android:layout_height="@dimen/vs_36"
                     android:background="@drawable/button_danmu_setting"
                     android:focusable="true"
                     android:gravity="center"
-                    android:paddingLeft="@dimen/vs_30"
-                    android:paddingRight="@dimen/vs_30"
+                    android:paddingLeft="@dimen/vs_20"
+                    android:paddingRight="@dimen/vs_20"
                     android:text="确定"
                     android:textColor="@color/dialog_text_primary"
-                    android:textSize="@dimen/ts_22" />
+                    android:textSize="@dimen/ts_16" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

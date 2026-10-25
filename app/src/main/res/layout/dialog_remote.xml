@@ -8,16 +8,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginLeft="@dimen/vs_20"
-        android:layout_marginRight="@dimen/vs_20"
+        android:layout_marginLeft="@dimen/vs_12"
+        android:layout_marginRight="@dimen/vs_12"
         android:background="@drawable/shape_danmu_setting_bg"
         android:orientation="vertical"
-        android:padding="@dimen/vs_30">
+        android:padding="@dimen/vs_16">
 
         <ImageView
             android:id="@+id/ivQRCode"
-            android:layout_width="@dimen/vs_200"
-            android:layout_height="@dimen/vs_200"
+            android:layout_width="@dimen/vs_160"
+            android:layout_height="@dimen/vs_160"
             android:layout_gravity="center" />
 
         <TextView
@@ -25,12 +25,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginTop="@dimen/vs_20"
+            android:layout_marginTop="@dimen/vs_12"
             android:gravity="center"
             android:lineSpacingMultiplier="1.5"
             android:textAlignment="gravity"
             android:textColor="@color/dialog_text_primary"
-            android:textSize="@dimen/ts_22"
+            android:textSize="@dimen/ts_14"
             tools:text="1111111111111111111111111111111111111111111111111111" />
     </LinearLayout>
 </FrameLayout>
