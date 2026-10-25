@@ -68,7 +68,8 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         ivThumb.setTag(R.id.ivThumb, pic);
         if (!TextUtils.isEmpty(pic)) {
             if (ImgUtil.isBase64Image(pic)) {
-                ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(pic));
+                // 手机版：base64 海报同样圆角裁剪，保持与卡片背景形状一致
+                ivThumb.setImageDrawable(ImgUtil.roundBitmap(mContext.getResources(), ImgUtil.decodeBase64ToBitmap(pic), AutoSizeUtils.mm2px(mContext, 10)));
                 ivThumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
             } else {
                 ImgUtil.load(pic, ivThumb, AutoSizeUtils.mm2px(mContext, 10), AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight), item.name);

@@ -43,6 +43,7 @@ import com.github.tvbox.osc.bean.MovieSort;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.server.ControlManager;
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.ui.adapter.CategoryGridAdapter;
 import com.github.tvbox.osc.ui.adapter.HomePageAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
@@ -367,7 +368,7 @@ public class HomeActivity extends BaseActivity {
         View content = LayoutInflater.from(this).inflate(R.layout.popup_home_categories, null);
         rvCategories = content.findViewById(R.id.rvCategories);
         rvCategories.setLayoutManager(new V7GridLayoutManager(this, 3));
-        rvCategories.setSpacingWithMargins(AutoSizeUtils.mm2px(this, 4.0f), AutoSizeUtils.dp2px(this, 8.0f));
+        rvCategories.setSpacingWithMargins(AutoSizeUtils.mm2px(this, 2.0f), AutoSizeUtils.dp2px(this, 4.0f));
         categoryAdapter = new CategoryGridAdapter();
         categoryAdapter.setSelectedPos(currentSelected);
         rvCategories.setAdapter(categoryAdapter);
@@ -378,27 +379,23 @@ public class HomeActivity extends BaseActivity {
         int count = categoryAdapter.getData().size();
         int rows = (count + columns - 1) / columns;
         int maxHeight = (int) (getResources().getDisplayMetrics().heightPixels * 0.55f);
-        int height = Math.min(rows * AutoSizeUtils.mm2px(this, 34.0f) + AutoSizeUtils.mm2px(this, 12.0f), maxHeight);
+        int height = Math.min(rows * AutoSizeUtils.mm2px(this, 26.0f) + AutoSizeUtils.mm2px(this, 8.0f), maxHeight);
         ViewGroup.LayoutParams lp = rvCategories.getLayoutParams();
         lp.height = height;
         rvCategories.setLayoutParams(lp);
 
-        rvCategories.setOnItemListener(new TvRecyclerView.OnItemListener() {
-            public void onItemPreSelected(TvRecyclerView tvRecyclerView, View view, int position) {
-            }
-
-            public void onItemSelected(TvRecyclerView tvRecyclerView, View view, int position) {
-            }
-
+        categoryAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(TvRecyclerView parent, View itemView, int position) {
-                if (itemView != null) {
-                    FastClickCheckUtil.check(itemView);
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                if (view != null) {
+                    FastClickCheckUtil.check(view);
                 }
                 dismissCategoryPopup();
                 selectSortFromPopup(position);
             }
         });
+        // 数据已绑定后再挂点击监听，确保单次点击即可触发
+        categoryAdapter.notifyDataSetChanged();
 
         categoryPopup = new PopupWindow(content, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         categoryPopup.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));

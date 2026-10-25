@@ -92,7 +92,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             if(style!=null && Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1)spanCount=ImgUtil.spanCountByStyle(style,spanCount);
             tvHotList.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
             int paddingLeft = -tvHotList.mHorizontalSpacingWithMargins / 2 + getResources().getDimensionPixelSize(R.dimen.vs_6);
-            int paddingTop = getResources().getDimensionPixelSize(R.dimen.vs_20);
+            int paddingTop = getResources().getDimensionPixelSize(R.dimen.vs_2);
             int paddingRight = -tvHotList.mHorizontalSpacingWithMargins / 2 + getResources().getDimensionPixelSize(R.dimen.vs_6);
             int paddingBottom = getResources().getDimensionPixelSize(R.dimen.vs_20);
             tvHotList.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
@@ -100,7 +100,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             tvHotList.setVisibility(View.VISIBLE);
             tvHotList.setLayoutManager(new V7LinearLayoutManager(this.mContext, V7LinearLayoutManager.HORIZONTAL, false));
             int paddingLeft = -tvHotList.mHorizontalSpacingWithMargins / 2 + getResources().getDimensionPixelSize(R.dimen.vs_6);
-            int paddingTop = getResources().getDimensionPixelSize(R.dimen.vs_20);
+            int paddingTop = getResources().getDimensionPixelSize(R.dimen.vs_2);
             int paddingRight = -tvHotList.mHorizontalSpacingWithMargins / 2 + getResources().getDimensionPixelSize(R.dimen.vs_6);
             int paddingBottom = getResources().getDimensionPixelSize(R.dimen.vs_20);
             tvHotList.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);

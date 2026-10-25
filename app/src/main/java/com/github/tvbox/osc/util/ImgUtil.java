@@ -130,6 +130,15 @@ public class ImgUtil {
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
     }
 
+    /** 手机版：base64 海报同样按卡片圆角裁剪，保持与背景形状一致 */
+    public static android.graphics.drawable.Drawable roundBitmap(android.content.res.Resources res, Bitmap bitmap, int radius) {
+        androidx.core.graphics.drawable.RoundedBitmapDrawable drawable =
+                androidx.core.graphics.drawable.RoundedBitmapDrawableFactory.create(res, bitmap);
+        drawable.setCornerRadius(radius);
+        drawable.setAntiAlias(true);
+        return drawable;
+    }
+
     public static void load(String url, ImageView view, int roundingRadius) {
         load(url, view, roundingRadius, 0, 0, null);
     }
