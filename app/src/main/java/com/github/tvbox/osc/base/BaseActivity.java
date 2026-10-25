@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.WindowInsets;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -105,6 +106,10 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
             | View.SYSTEM_UI_FLAG_FULLSCREEN
             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
 
+    /** 非沉浸页面：窗口绘制到状态栏下方，配合透明状态栏让窗口背景透出，内容再用 padding 下移 */
+    private static final int EDGE_TO_EDGE_FLAGS = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+
     public void hideSysBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
@@ -112,9 +117,61 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
                 uiOptions |= IMMERSIVE_FLAGS;
             } else {
                 uiOptions &= ~IMMERSIVE_FLAGS;
+                uiOptions |= EDGE_TO_EDGE_FLAGS;
             }
             getWindow().getDecorView().setSystemUiVisibility(uiOptions);
         }
+        applyStatusBarInset();
+    }
+
+    /**
+     * 手机版：状态栏改为透明后，窗口内容会延伸到状态栏下方，
+     * 这里给内容容器补上状态栏高度的上内边距，避免页面内容被状态栏遮挡；
+     * 全屏沉浸页面不补内边距。
+     */
+    private void applyStatusBarInset() {
+        View content = findViewById(android.R.id.content);
+        if (content == null) return;
+        int top = isImmersionPage() ? 0 : getStatusBarHeightPx();
+        if (content.getPaddingTop() != top) {
+            content.setPadding(content.getPaddingLeft(), top, content.getPaddingRight(), content.getPaddingBottom());
+        }
+    }
+
+    private int getStatusBarHeightPx() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                WindowInsets insets = getWindow().getDecorView().getRootWindowInsets();
+                if (insets != null && insets.getSystemWindowInsetTop() > 0) {
+                    return insets.getSystemWindowInsetTop();
+                }
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
+        }
+        int height = 0;
+        try {
+            Resources resources = super.getResources();
+            int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                float autoDensity = resources.getDisplayMetrics().density;
+                height = resources.getDimensionPixelSize(resourceId);
+                // AutoSize 会改写 density，这里换算回真实像素
+                DisplayMetrics realDm = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getRealMetrics(realDm);
+                if (autoDensity > 0 && realDm.density > 0) {
+                    height = Math.round(height / autoDensity * realDm.density);
+                }
+            }
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+        if (height <= 0) {
+            DisplayMetrics realDm = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getRealMetrics(realDm);
+            height = Math.round(24 * realDm.density);
+        }
+        return height;
     }
 
     private void initSystemUiListener() {
@@ -123,8 +180,12 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
             decorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
                 @Override
                 public void onSystemUiVisibilityChange(int visibility) {
-                    // 手机版：非沉浸页面保持状态栏常显，不再自动隐藏
+                    // 手机版：非沉浸页面保持状态栏常显，状态栏下拉等操作清掉标志后需重新应用
                     if (!isImmersionPage()) {
+                        if ((visibility & EDGE_TO_EDGE_FLAGS) != EDGE_TO_EDGE_FLAGS) {
+                            decorView.removeCallbacks(hideSysBarRunnable);
+                            decorView.post(hideSysBarRunnable);
+                        }
                         return;
                     }
                     int hiddenBars = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN;

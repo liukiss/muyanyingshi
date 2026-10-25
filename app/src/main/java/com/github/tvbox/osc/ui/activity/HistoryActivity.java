@@ -195,6 +195,21 @@ public class HistoryActivity extends BaseActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        // 删除模式是全局 UI 状态（主界面影片的删除图标也依赖它），
+        // 离开本页时必须立即复位，否则会把删除模式带回主界面
+        HawkConfig.hotVodDelete = false;
+        delMode = false;
+        if (tvDelTip != null) {
+            tvDelTip.setVisibility(View.GONE);
+        }
+        if (historyAdapter != null) {
+            historyAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         EventBus.getDefault().unregister(this);
