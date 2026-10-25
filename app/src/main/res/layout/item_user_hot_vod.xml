@@ -2,16 +2,17 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/shape_user_focus"
     android:focusable="true"
-    android:orientation="vertical"
-    android:padding="@dimen/vs_1">
+    android:orientation="vertical">
 
-    <!-- 图片区：只承载封面和左上角标，高度由 HomeHotVodAdapter 按站点比例设置 -->
+    <!-- 卡片：焦点背景只包裹封面，影片名称在卡片下方独立显示 -->
     <FrameLayout
         android:id="@+id/mItemFrame"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/vs_110">
+        android:layout_height="@dimen/vs_150"
+        android:background="@drawable/shape_user_focus"
+        android:duplicateParentState="true"
+        android:padding="@dimen/vs_1">
 
         <ImageView
             android:id="@+id/ivThumb"
@@ -41,8 +42,26 @@
                 android:paddingRight="@dimen/vs_5"
                 android:singleLine="true"
                 android:textColor="@android:color/white"
-                android:textSize="@dimen/ts_22" />
+                android:textSize="@dimen/ts_16" />
         </LinearLayout>
+
+        <!-- 更新至 / 评分 等标签：半透明，叠在封面右下角 -->
+        <TextView
+            android:id="@+id/tvNote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="@dimen/vs_5"
+            android:layout_marginRight="@dimen/vs_5"
+            android:layout_marginBottom="@dimen/vs_5"
+            android:background="@drawable/shape_thumb_note_alpha"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:paddingLeft="@dimen/vs_5"
+            android:paddingRight="@dimen/vs_5"
+            android:singleLine="true"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/ts_16" />
 
         <FrameLayout
             android:id="@+id/delFrameLayout"
@@ -64,44 +83,17 @@
 
     </FrameLayout>
 
-    <!-- 标签区：固定高度保证同一行卡片对齐，文字不再压在封面上 -->
-    <LinearLayout
+    <!-- 影片名称：卡片下方，小字号，最多两行完整显示 -->
+    <TextView
+        android:id="@+id/tvName"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/vs_45"
-        android:gravity="bottom"
-        android:orientation="vertical"
-        android:padding="@dimen/vs_1">
-
-        <TextView
-            android:id="@+id/tvNote"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/vs_2"
-            android:layout_marginRight="@dimen/vs_2"
-            android:layout_marginBottom="@dimen/vs_2"
-            android:background="@drawable/shape_thumb_note"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:paddingLeft="@dimen/vs_5"
-            android:paddingRight="@dimen/vs_5"
-            android:singleLine="true"
-            android:textColor="@android:color/white"
-            android:textSize="@dimen/ts_22" />
-
-        <TextView
-            android:id="@+id/tvName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/shape_thumb_bottom_name"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:paddingLeft="@dimen/vs_5"
-            android:paddingRight="@dimen/vs_5"
-            android:paddingTop="@dimen/vs_2"
-            android:paddingBottom="@dimen/vs_2"
-            android:singleLine="true"
-            android:text="Title"
-            android:textColor="@android:color/white"
-            android:textSize="@dimen/ts_22" />
-    </LinearLayout>
+        android:layout_height="@dimen/vs_36"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:paddingLeft="@dimen/vs_2"
+        android:paddingRight="@dimen/vs_2"
+        android:text="Title"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/ts_16" />
 </LinearLayout>
