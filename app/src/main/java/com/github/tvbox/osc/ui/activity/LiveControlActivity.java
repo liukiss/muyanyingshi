@@ -5,7 +5,10 @@ import android.net.Uri;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -120,6 +123,22 @@ public class LiveControlActivity extends BaseActivity {
 
     private static final String DEFAULT_EPG_ADDRESS = "http://epg.51zmt.top:8000/api/diyp/?ch={name}&date={date}";
     private static final Hashtable<String, ArrayList<Epginfo>> EPG_CACHE = new Hashtable<>();
+    private static final long CHANNEL_SYNC_DELAY = 300L;
+    // 频道列表条目的设计尺寸（竖屏 360 基准，单位 mm 即设计单位）
+    private static final int CHANNEL_LIST_DESIGN_WIDTH = 360;
+    private static final float ROW_HEIGHT_MM = 30f;
+    private static final float ROW_TEXT_MM = 12f;
+    private static final float ROW_PADDING_RIGHT_MM = 4f;
+    private static final float ROW_MARGIN_H_MM = 3f;
+    private static final float ROW_MARGIN_V_MM = 1f;
+    private boolean channelItemSizeHooked = false;
+    private int channelSyncRetryCount = 0;
+    private final Runnable mDeferredChannelSync = new Runnable() {
+        @Override
+        public void run() {
+            performDeferredChannelSync();
+        }
+    };
     private final Handler mHandler = new Handler();
     private int resolutionRetryCount = 0;
     private boolean resolutionPending = false;
@@ -244,18 +263,67 @@ public class LiveControlActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // 从横屏全屏直播页返回时，AutoSize 基准还停留在横屏尺寸，
-        // 若此时刷新频道列表，列表项会按横屏比例重新膨胀。这里先恢复本页竖屏基准。
-        refreshAutoSize();
         if (mVideoView == null || currentChannelItem == null) return;
-        syncChannelFromHawk();
         Hawk.put(HawkConfig.PLAYER_IS_LIVE, true);
-        int playState = mVideoView.getCurrentPlayState();
-        if (playState == VideoView.STATE_IDLE || playState == VideoView.STATE_ERROR) {
-            playCurrentChannel();
+        String hawkChannelName = Hawk.get(HawkConfig.LIVE_CHANNEL, "");
+        boolean pendingChannelSwitch = !TextUtils.isEmpty(hawkChannelName)
+                && !hawkChannelName.equals(currentChannelItem.getChannelName());
+        if (pendingChannelSwitch) {
+            // 全屏页换过台时先不播放旧频道，等待延迟同步后直接用新频道起播
+            showPlayerLoading(true);
         } else {
-            mVideoView.start();
+            int playState = mVideoView.getCurrentPlayState();
+            if (playState == VideoView.STATE_IDLE || playState == VideoView.STATE_ERROR) {
+                playCurrentChannel();
+            } else {
+                mVideoView.start();
+            }
         }
+        // 从横屏全屏页返回的瞬间，显示尺寸可能仍是横屏值：
+        // 此时重新膨胀的列表项会按横屏比例放大。延迟到窗口尺寸稳定后再同步并重建列表。
+        scheduleDeferredChannelSync();
+    }
+
+    private void scheduleDeferredChannelSync() {
+        View decorView = getWindow().getDecorView();
+        decorView.removeCallbacks(mDeferredChannelSync);
+        channelSyncRetryCount = 0;
+        decorView.postDelayed(mDeferredChannelSync, CHANNEL_SYNC_DELAY);
+    }
+
+    private void performDeferredChannelSync() {
+        if (isFinishing() || isDestroyed()) return;
+        View decorView = getWindow().getDecorView();
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int decorWidth = decorView.getWidth();
+        // 本页锁定竖屏：必须等到 Display 已经回到竖屏、且窗口宽度与 Display 宽度一致，
+        // 否则 refreshAutoSize() 会把横屏宽度当作基准，导致随后新建的列表条目被放大。
+        boolean portrait = dm.widthPixels > 0 && dm.heightPixels > 0 && dm.widthPixels < dm.heightPixels;
+        boolean windowMatched = decorWidth > 0 && dm.widthPixels > 0
+                && Math.abs(dm.widthPixels - decorWidth) <= Math.max(8, dm.widthPixels / 10);
+        if ((!portrait || !windowMatched) && channelSyncRetryCount++ < 20) {
+            decorView.postDelayed(mDeferredChannelSync, 100);
+            return;
+        }
+        channelSyncRetryCount = 0;
+        refreshAutoSize();
+        boolean channelChanged = syncChannelFromHawk();
+        if (channelChanged) {
+            // 换台后返回：丢弃旧 ViewHolder，按当前竖屏密度重新创建列表项
+            resetChannelAdapters();
+        }
+        refreshChannelLists();
+    }
+
+    private void resetChannelAdapters() {
+        if (mGroupListView == null || mChannelListView == null) return;
+        mGroupListView.setAdapter(null);
+        mChannelListView.setAdapter(null);
+        // 回收池中的旧条目是按错误密度膨胀的，必须一并丢弃，否则会被新适配器复用
+        mGroupListView.getRecycledViewPool().clear();
+        mChannelListView.getRecycledViewPool().clear();
+        initChannelListViews();
     }
 
     @Override
@@ -270,6 +338,7 @@ public class LiveControlActivity extends BaseActivity {
     protected void onDestroy() {
         Hawk.put(HawkConfig.PLAYER_IS_LIVE, false);
         mHandler.removeCallbacksAndMessages(null);
+        getWindow().getDecorView().removeCallbacks(mDeferredChannelSync);
         if (mVideoView != null) {
             mVideoView.release();
         }
@@ -595,6 +664,79 @@ public class LiveControlActivity extends BaseActivity {
                 playChannelAt(position);
             }
         });
+        if (!channelItemSizeHooked) {
+            channelItemSizeHooked = true;
+            installChannelItemSizeHook(mGroupListView);
+            installChannelItemSizeHook(mChannelListView);
+        }
+    }
+
+    /**
+     * 从横屏全屏页返回时，AutoSize 的全局基准宽度可能还停留在横屏值，
+     * 此时新膨胀的条目字号/行高会偏大。这里按“窗口宽度 / 360”直接换算像素，
+     * 在条目挂载时校正一次，使列表尺寸不依赖 AutoSize 的刷新时机。
+     */
+    private void installChannelItemSizeHook(TvRecyclerView listView) {
+        listView.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+            @Override
+            public void onChildViewAttachedToWindow(View view) {
+                normalizeChannelItem(view);
+            }
+
+            @Override
+            public void onChildViewDetachedFromWindow(View view) {
+            }
+        });
+    }
+
+    private void normalizeChannelItems() {
+        normalizeChannelListItems(mGroupListView);
+        normalizeChannelListItems(mChannelListView);
+    }
+
+    private void normalizeChannelListItems(TvRecyclerView listView) {
+        if (listView == null) return;
+        for (int i = 0; i < listView.getChildCount(); i++) {
+            normalizeChannelItem(listView.getChildAt(i));
+        }
+    }
+
+    private void normalizeChannelItem(View itemView) {
+        if (itemView == null) return;
+        int baseWidth = getWindow().getDecorView().getWidth();
+        if (baseWidth <= 0) return;
+        float unit = (float) baseWidth / CHANNEL_LIST_DESIGN_WIDTH;
+        if (itemView.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) itemView.getLayoutParams();
+            int marginH = Math.round(ROW_MARGIN_H_MM * unit);
+            int marginV = Math.round(ROW_MARGIN_V_MM * unit);
+            if (marginParams.leftMargin != marginH || marginParams.rightMargin != marginH
+                    || marginParams.topMargin != marginV || marginParams.bottomMargin != marginV) {
+                marginParams.setMargins(marginH, marginV, marginH, marginV);
+                itemView.setLayoutParams(marginParams);
+            }
+        }
+        normalizeChannelRowText(itemView.findViewById(R.id.tvChannelNum), unit, -1);
+        normalizeChannelRowText(itemView.findViewById(R.id.tvChannelName), unit,
+                Math.round(ROW_PADDING_RIGHT_MM * unit));
+        normalizeChannelRowText(itemView.findViewById(R.id.tvChannelGroupName), unit, -1);
+    }
+
+    private void normalizeChannelRowText(TextView textView, float unit, int paddingRightPx) {
+        if (textView == null) return;
+        int rowHeight = Math.round(ROW_HEIGHT_MM * unit);
+        int textSize = Math.round(ROW_TEXT_MM * unit);
+        if (textView.getLayoutParams() != null && textView.getLayoutParams().height != rowHeight) {
+            textView.getLayoutParams().height = rowHeight;
+            textView.setLayoutParams(textView.getLayoutParams());
+        }
+        if (Math.round(textView.getTextSize()) != textSize) {
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
+        }
+        if (paddingRightPx >= 0 && textView.getPaddingRight() != paddingRightPx) {
+            textView.setPadding(textView.getPaddingLeft(), textView.getPaddingTop(),
+                    paddingRightPx, textView.getPaddingBottom());
+        }
     }
 
     private void selectGroupAt(int position) {
@@ -615,6 +757,7 @@ public class LiveControlActivity extends BaseActivity {
         liveChannelItemAdapter.setNewData(new ArrayList<>(channels));
         liveChannelItemAdapter.setSelectedChannelIndex(-1);
         mChannelListView.scrollToPosition(0);
+        normalizeChannelItems();
     }
 
     private void playChannelAt(int position) {
@@ -670,6 +813,7 @@ public class LiveControlActivity extends BaseActivity {
         }
         if (channels == null) {
             liveChannelItemAdapter.setNewData(new ArrayList<>());
+            normalizeChannelItems();
             return;
         }
         selectedGroupIndex = groups.get(groupPos).getGroupIndex();
@@ -681,6 +825,7 @@ public class LiveControlActivity extends BaseActivity {
             mChannelListView.scrollToPosition(channelPos);
             mGroupListView.scrollToPosition(groupPos);
         }
+        normalizeChannelItems();
     }
 
     private void updateProgramInfo() {
@@ -1154,14 +1299,15 @@ public class LiveControlActivity extends BaseActivity {
         }
     }
 
-    private void syncChannelFromHawk() {
+    private boolean syncChannelFromHawk() {
         String channelName = Hawk.get(HawkConfig.LIVE_CHANNEL, "");
-        if (TextUtils.isEmpty(channelName)) return;
-        if (currentChannelItem != null && channelName.equals(currentChannelItem.getChannelName())) return;
+        if (TextUtils.isEmpty(channelName)) return false;
+        if (currentChannelItem != null && channelName.equals(currentChannelItem.getChannelName())) return false;
         if (findChannelByName(channelName)) {
             playCurrentChannel();
-            refreshChannelLists();
+            return true;
         }
+        return false;
     }
 
     private HashMap<String, String> liveChannelHeader() {
