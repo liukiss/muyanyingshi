@@ -162,6 +162,60 @@ public class ImgUtil {
                 .into(view);
     }
 
+    /**
+     * 图片原始宽高比回调（宽/高）。
+     */
+    public interface AspectListener {
+        void onAspect(float ratio);
+    }
+
+    /**
+     * 手机版：按图片原始比例加载（不做裁剪），加载完成后回调原始宽高比，
+     * 供调用方按图片真实比例调整卡片高度，避免站点声明比例与图片比例不一致时图片被强行裁剪。
+     */
+    public static void loadWithAspect(String url, ImageView view, int roundingRadius, int newWidth, int newHeight, String label, final AspectListener aspectListener) {
+        view.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        if (roundingRadius <= 0) roundingRadius = 1;
+        final Drawable fallback = createTextDrawable(TextUtils.isEmpty(label) ? "TVBox" : label, newWidth, newHeight, roundingRadius);
+        Drawable placeholder = createImagePlaceholderDrawable(newWidth, newHeight, roundingRadius);
+        if (isInvalidImageUrl(url)) {
+            view.setImageDrawable(fallback);
+            return;
+        }
+        RequestOptions options = new RequestOptions()
+                .format(DecodeFormat.PREFER_RGB_565)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .dontAnimate()
+                .transform(new RoundedCorners(roundingRadius));
+        if (newWidth > 0 && newHeight > 0) {
+            options = options.override(newWidth, newHeight);
+        }
+        Glide.with(App.getInstance())
+                .asBitmap()
+                .load(getUrl(url))
+                .placeholder(placeholder)
+                .error(fallback)
+                .listener(new RequestListener<Bitmap>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+                        view.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        view.setImageDrawable(fallback);
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+                        view.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        if (aspectListener != null && resource != null && resource.getHeight() > 0) {
+                            aspectListener.onAspect(resource.getWidth() / (float) resource.getHeight());
+                        }
+                        return false;
+                    }
+                })
+                .apply(options)
+                .into(view);
+    }
+
     public static void loadUrl(String url, ImageView view) {
         load(url, view, 10);
     }
