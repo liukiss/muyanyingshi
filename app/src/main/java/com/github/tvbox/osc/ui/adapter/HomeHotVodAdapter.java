@@ -1,6 +1,5 @@
 package com.github.tvbox.osc.ui.adapter;
 
-import android.graphics.Bitmap;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,35 +64,18 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
             newHeight = (int) (newWidth / style.ratio);
         }
 
-        boolean gridStyle = style != null && Hawk.get(HawkConfig.HOME_REC_STYLE, true);
         String pic = item.pic == null ? "" : item.pic.trim();
         ivThumb.setTag(R.id.ivThumb, pic);
-        Float imageRatio = gridStyle ? ImgUtil.getCachedRatio(pic) : null;
         if (!TextUtils.isEmpty(pic)) {
             if (ImgUtil.isBase64Image(pic)) {
-                Bitmap bitmap = ImgUtil.decodeBase64ToBitmap(pic);
-                ivThumb.setImageBitmap(bitmap);
-                if (gridStyle && bitmap != null && bitmap.getHeight() > 0) {
-                    // 站点声明了比例：base64 图片按自身比例显示，避免被 fitXY 拉伸
-                    ivThumb.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    imageRatio = bitmap.getWidth() / (float) bitmap.getHeight();
-                }
-            } else if (gridStyle) {
-                // 站点声明了比例：按封面真实比例自适应卡片高度，图片完整填满、不裁剪不拉伸
-                ImgUtil.loadAdaptive(pic, ivThumb, AutoSizeUtils.mm2px(mContext, 10), AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight), item.name, new ImgUtil.RatioListener() {
-                    @Override
-                    public void onRatio(float ratio) {
-                        if (pic.equals(ivThumb.getTag(R.id.ivThumb))) {
-                            ImgUtil.applyContainerRatio(ivThumb, ratio);
-                        }
-                    }
-                });
+                ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(pic));
+                ivThumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
             } else {
                 ImgUtil.load(pic, ivThumb, AutoSizeUtils.mm2px(mContext, 10), AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight), item.name);
             }
         } else {
             ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
-            if (gridStyle) ivThumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            ivThumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
         }
         // 手机版适配：横排热播（非网格）时固定 item 根宽，否则 match_parent 根宽会一屏只占一项
         if (!Hawk.get(HawkConfig.HOME_REC_STYLE, true)) {
@@ -103,10 +85,10 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
                 helper.itemView.setLayoutParams(rootLp);
             }
         }
-        applyStyleToImage(ivThumb, imageRatio);
+        applyStyleToImage(ivThumb);
     }
 
-    private void applyStyleToImage(final ImageView ivThumb, Float imageRatio) {
+    private void applyStyleToImage(final ImageView ivThumb) {
         if (style != null) {
             final ViewGroup container = (ViewGroup) ivThumb.getParent();
             if (!Hawk.get(HawkConfig.HOME_REC_STYLE, true)) {
@@ -118,12 +100,12 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
                 container.setLayoutParams(lp);
                 return;
             }
-            // 网格热播：宽度交给网格列宽（MATCH_PARENT），高度按图片真实比例（未知时用站点比例）换算，
-            // 避免 TV 版按固定 mm 写死宽度在竖屏 360 基准下超出列宽。
+            // 网格热播：宽度交给网格列宽（MATCH_PARENT），高度 = 列宽 / 站点声明比例。
+            // 同一站点卡片高度统一（行高对齐），标签区已在图片下方独立显示。
             ViewGroup.LayoutParams containerParams = container.getLayoutParams();
             containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
             container.setLayoutParams(containerParams);
-            ImgUtil.applyContainerRatio(ivThumb, imageRatio != null ? imageRatio : style.ratio);
+            ImgUtil.applyContainerRatio(ivThumb, style.ratio);
         }
     }
 }

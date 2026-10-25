@@ -45,73 +45,8 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
 
 public class ImgUtil {
     private static final Map<String, Drawable> drawableCache = new HashMap<>();
-    private static final Map<String, Float> ratioCache = new HashMap<>();
     public static int defaultWidth = 244;
     public static int defaultHeight = 320;
-
-    public interface RatioListener {
-        void onRatio(float ratio);
-    }
-
-    public static Float getCachedRatio(String url) {
-        if (TextUtils.isEmpty(url)) return null;
-        return ratioCache.get(url);
-    }
-
-    /**
-     * 按图片真实比例显示：只按宽度等比缩放（FitCenter，不裁剪），
-     * 加载完成后通过 RatioListener 回调图片真实宽高比，由调用方把卡片高度设为 列宽/比例，
-     * 这样图片既不会被裁剪，也不会留白或拉伸。
-     */
-    public static void loadAdaptive(String url, final ImageView view, int roundingRadius, int newWidth, int newHeight, String label, final RatioListener listener) {
-        view.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        if (roundingRadius <= 0) roundingRadius = 1;
-        Drawable fallback = createTextDrawable(TextUtils.isEmpty(label) ? "TVBox" : label, newWidth, newHeight, roundingRadius);
-        Drawable placeholder = createImagePlaceholderDrawable(newWidth, newHeight, roundingRadius);
-        if (isInvalidImageUrl(url)) {
-            view.setImageDrawable(fallback);
-            return;
-        }
-        final String cacheKey = url;
-        RequestOptions options = new RequestOptions()
-                .format(DecodeFormat.PREFER_RGB_565)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .dontAnimate()
-                .transform(new FitCenter(), new RoundedCorners(roundingRadius));
-        if (newWidth > 0 && newHeight > 0) {
-            // 高度给足，保证 FitCenter 只按宽度等比缩放，输出位图仍保持原图比例
-            options = options.override(newWidth, Math.max(newHeight, 1) * 3);
-        }
-        Glide.with(App.getInstance())
-                .asBitmap()
-                .load(getUrl(url))
-                .placeholder(placeholder)
-                .error(fallback)
-                .listener(new RequestListener<Bitmap>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
-                        view.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        view.setImageDrawable(fallback);
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
-                        view.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        if (resource != null && resource.getHeight() > 0) {
-                            float ratio = resource.getWidth() / (float) resource.getHeight();
-                            if (ratio > 0.3f && ratio < 4f) {
-                                if (ratioCache.size() > 300) ratioCache.clear();
-                                ratioCache.put(cacheKey, ratio);
-                                if (listener != null) listener.onRatio(ratio);
-                            }
-                        }
-                        return false;
-                    }
-                })
-                .apply(options)
-                .into(view);
-    }
 
     /** 把图片容器的宽高比设置为 ratio（宽/高），宽度撑满网格列宽。 */
     public static void applyContainerRatio(final ImageView view, final float ratio) {
@@ -172,10 +107,9 @@ public class ImgUtil {
     public static int spanCountByStyle(Style style, int defaultCount) {
         int spanCount = defaultCount;
         if ("rect".equals(style.type)) {
-            if (style.ratio >= 1.7) {
+            // 手机版：横版比例（>=1.3）的站点统一 3 列，4 列会把卡片压得过矮、标签挤满封面
+            if (style.ratio >= 1.3) {
                 spanCount = 3;
-            } else if (style.ratio >= 1.3) {
-                spanCount = 4;
             }
         } else if ("list".equals(style.type)) {
             spanCount = 1;
