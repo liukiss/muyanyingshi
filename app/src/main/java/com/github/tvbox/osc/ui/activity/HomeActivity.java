@@ -11,7 +11,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.TypedValue;
+import android.graphics.drawable.ColorDrawable;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -19,6 +21,7 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.BounceInterpolator;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +43,7 @@ import com.github.tvbox.osc.bean.MovieSort;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.server.ControlManager;
+import com.github.tvbox.osc.ui.adapter.CategoryGridAdapter;
 import com.github.tvbox.osc.ui.adapter.HomePageAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.adapter.SortAdapter;
@@ -87,6 +91,9 @@ public class HomeActivity extends BaseActivity {
     private TextView tvName;
     private TvRecyclerView mGridView;
     private NoScrollViewPager mViewPager;
+    private PopupWindow categoryPopup;
+    private TvRecyclerView rvCategories;
+    private CategoryGridAdapter categoryAdapter;
     private SourceViewModel sourceViewModel;
     private SortAdapter sortAdapter;
     private HomePageAdapter pageAdapter;
@@ -198,6 +205,14 @@ public class HomeActivity extends BaseActivity {
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
                 jumpActivity(PushActivity.class);
+            }
+        });
+        // 分类行最右侧按钮：下拉弹窗展示全部分类标签
+        findViewById(R.id.ivCategoryMore).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                showCategoryPopup();
             }
         });
         this.sortAdapter = new SortAdapter();
@@ -339,6 +354,110 @@ public class HomeActivity extends BaseActivity {
         //mHandler.postDelayed(mFindFocus, 500);
     }
 
+
+    /** 下拉弹窗：把分类行的全部标签以多行等宽网格展示 */
+    private void showCategoryPopup() {
+        if (sortAdapter == null || sortAdapter.getData() == null || sortAdapter.getData().isEmpty()) {
+            return;
+        }
+        if (categoryPopup != null && categoryPopup.isShowing()) {
+            categoryPopup.dismiss();
+            return;
+        }
+        View content = LayoutInflater.from(this).inflate(R.layout.popup_home_categories, null);
+        rvCategories = content.findViewById(R.id.rvCategories);
+        rvCategories.setLayoutManager(new V7GridLayoutManager(this, 3));
+        rvCategories.setSpacingWithMargins(AutoSizeUtils.mm2px(this, 4.0f), AutoSizeUtils.dp2px(this, 8.0f));
+        categoryAdapter = new CategoryGridAdapter();
+        categoryAdapter.setSelectedPos(currentSelected);
+        rvCategories.setAdapter(categoryAdapter);
+        categoryAdapter.setNewData(new ArrayList<>(sortAdapter.getData()));
+
+        // 按行数计算弹窗高度，超出屏幕一半时内部滚动
+        int columns = 3;
+        int count = categoryAdapter.getData().size();
+        int rows = (count + columns - 1) / columns;
+        int maxHeight = (int) (getResources().getDisplayMetrics().heightPixels * 0.55f);
+        int height = Math.min(rows * AutoSizeUtils.mm2px(this, 34.0f) + AutoSizeUtils.mm2px(this, 12.0f), maxHeight);
+        ViewGroup.LayoutParams lp = rvCategories.getLayoutParams();
+        lp.height = height;
+        rvCategories.setLayoutParams(lp);
+
+        rvCategories.setOnItemListener(new TvRecyclerView.OnItemListener() {
+            public void onItemPreSelected(TvRecyclerView tvRecyclerView, View view, int position) {
+            }
+
+            public void onItemSelected(TvRecyclerView tvRecyclerView, View view, int position) {
+            }
+
+            @Override
+            public void onItemClick(TvRecyclerView parent, View itemView, int position) {
+                if (itemView != null) {
+                    FastClickCheckUtil.check(itemView);
+                }
+                dismissCategoryPopup();
+                selectSortFromPopup(position);
+            }
+        });
+
+        categoryPopup = new PopupWindow(content, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        categoryPopup.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        categoryPopup.setOutsideTouchable(true);
+        categoryPopup.setAnimationStyle(R.style.PopupDropDownAnim);
+        categoryPopup.showAsDropDown(findViewById(R.id.sortBarLayout), 0, 0);
+        categoryPopup.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                categoryPopup = null;
+            }
+        });
+        rvCategories.post(new Runnable() {
+            @Override
+            public void run() {
+                if (rvCategories != null) {
+                    rvCategories.setSelectedPosition(currentSelected);
+                }
+            }
+        });
+    }
+
+    private void dismissCategoryPopup() {
+        if (categoryPopup != null && categoryPopup.isShowing()) {
+            categoryPopup.dismiss();
+        }
+    }
+
+    /** 弹窗选中分类：把焦点移到分类行对应标签，复用原有的切换流程加载页面 */
+    private void selectSortFromPopup(final int position) {
+        if (sortAdapter == null || position < 0 || position >= sortAdapter.getData().size()) {
+            return;
+        }
+        if (position == currentSelected) {
+            return;
+        }
+        View child = mGridView.getLayoutManager() != null
+                ? mGridView.getLayoutManager().findViewByPosition(position) : null;
+        if (child != null) {
+            child.requestFocus();
+            return;
+        }
+        mGridView.setSelectedPosition(position);
+        mGridView.scrollToPosition(position);
+        mGridView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                RecyclerView.ViewHolder holder = mGridView.findViewHolderForAdapterPosition(position);
+                if (holder != null) {
+                    holder.itemView.requestFocus();
+                } else {
+                    sortFocused = position;
+                    sortChange = true;
+                    mHandler.removeCallbacks(mDataRunnable);
+                    mHandler.postDelayed(mDataRunnable, 50);
+                }
+            }
+        }, 150);
+    }
 
     private boolean skipNextUpdate = false;
 
@@ -844,6 +963,7 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        dismissCategoryPopup();
         dismissHomeDialogs();
         mHandler.removeCallbacksAndMessages(null);
         super.onDestroy();

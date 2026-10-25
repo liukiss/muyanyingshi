@@ -43,6 +43,12 @@
         <item name="android:windowFullscreen">false</item>
     </style>
 
+    <!-- 首页分类弹窗下拉动画 -->
+    <style name="PopupDropDownAnim">
+        <item name="android:windowEnterAnimation">@anim/popup_drop_down_in</item>
+        <item name="android:windowExitAnimation">@anim/popup_drop_down_out</item>
+    </style>
+
     <style name="epg_window_btn">
         <item name="android:gravity">center</item>
         <item name="android:background">@drawable/item_bg_selector_right</item>
