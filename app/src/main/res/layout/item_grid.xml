@@ -112,14 +112,13 @@
 
     </FrameLayout>
 
-    <!-- 影片名称：卡片下方，小字号，最多两行完整显示 -->
+    <!-- 影片名称：卡片下方，小字号，按实际行数自适应高度（行内图片顶部对齐） -->
     <TextView
         android:id="@+id/tvName"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/vs_36"
-        android:ellipsize="end"
+        android:layout_height="wrap_content"
         android:gravity="center"
-        android:maxLines="2"
+        android:includeFontPadding="false"
         android:paddingLeft="@dimen/vs_2"
         android:paddingRight="@dimen/vs_2"
         android:text="Title"
