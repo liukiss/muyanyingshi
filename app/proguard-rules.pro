@@ -237,6 +237,8 @@
 # Cronet支持http3
 -keep class com.google.net.cronet.**{*;}
 -keep class org.chromium.net.**{*;}
+# Zxing：spider jar（如网盘配置中心）运行时会直接使用，App 自身已无引用，必须保留
+-keep class com.google.zxing.**{*;}
 
 # Nano
 -keep class fi.iki.elonen.** { *; }
