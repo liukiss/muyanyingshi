@@ -1,10 +1,6 @@
 package com.github.tvbox.osc.ui.activity;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.IntEvaluator;
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -54,7 +50,6 @@ import com.github.tvbox.osc.ui.fragment.GridFragment;
 import com.github.tvbox.osc.ui.fragment.UserFragment;
 import com.github.tvbox.osc.ui.tv.widget.DefaultTransformer;
 import com.github.tvbox.osc.ui.tv.widget.NoScrollViewPager;
-import com.github.tvbox.osc.ui.tv.widget.ViewObj;
 import com.github.tvbox.osc.util.AppManager;
 import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
@@ -230,6 +225,7 @@ public class HomeActivity extends BaseActivity {
                 showCategoryPopup();
             }
         });
+        bindBottomBar();
         this.sortAdapter = new SortAdapter();
         this.mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
         // 手机版：分类行贴左显示并压缩列间距
@@ -472,6 +468,41 @@ public class HomeActivity extends BaseActivity {
 
     private boolean skipNextUpdate = false;
 
+    /** 手机版：底部常驻的直播 / 历史 / 搜索 / 设置入口（不随 ViewPager 滑动） */
+    private void bindBottomBar() {
+        View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                v.animate().scaleX(hasFocus ? 1.05f : 1.0f).scaleY(hasFocus ? 1.05f : 1.0f)
+                        .setDuration(300).setInterpolator(new BounceInterpolator()).start();
+            }
+        };
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // takagen99: Remove Delete Mode
+                HawkConfig.hotVodDelete = false;
+                FastClickCheckUtil.check(v);
+                int id = v.getId();
+                if (id == R.id.tvLive) {
+                    jumpActivity(LiveControlActivity.class);
+                } else if (id == R.id.tvSearch) {
+                    jumpActivity(SearchActivity.class);
+                } else if (id == R.id.tvSetting) {
+                    jumpActivity(SettingActivity.class);
+                } else if (id == R.id.tvHistory) {
+                    jumpActivity(HistoryActivity.class);
+                }
+            }
+        };
+        int[] ids = {R.id.tvLive, R.id.tvHistory, R.id.tvSearch, R.id.tvSetting};
+        for (int id : ids) {
+            View button = findViewById(id);
+            button.setOnClickListener(clickListener);
+            button.setOnFocusChangeListener(focusChangeListener);
+        }
+    }
+
     /** 手机版：ViewPager 滑动选中某页后同步分类标签（点击标签/弹窗切换时 position == currentSelected，直接返回） */
     private void onHomePageSelected(int position) {
         if (position == currentSelected) {
@@ -482,7 +513,6 @@ public class HomeActivity extends BaseActivity {
         sortChange = false;
         mHandler.removeCallbacks(mDataRunnable);
         syncSortBarByPage(position);
-        changeTop(position != 0);
         if (position >= 0 && position < fragments.size()) {
             BaseLazyFragment baseLazyFragment = fragments.get(position);
             if (baseLazyFragment instanceof GridFragment && ((GridFragment) baseLazyFragment).shouldReloadOnSelect()) {
@@ -959,7 +989,6 @@ public class HomeActivity extends BaseActivity {
                 if (sortFocused != currentSelected) {
                     currentSelected = sortFocused;
                     mViewPager.setCurrentItem(sortFocused, false);
-                    changeTop(sortFocused != 0);
                     if (baseLazyFragment instanceof GridFragment && ((GridFragment) baseLazyFragment).shouldReloadOnSelect()) {
                         ((GridFragment) baseLazyFragment).forceRefresh();
                     }
@@ -993,55 +1022,6 @@ public class HomeActivity extends BaseActivity {
     }
 
     byte topHide = 0;
-
-    private void changeTop(boolean hide) {
-        ViewObj viewObj = new ViewObj(topLayout, (ViewGroup.MarginLayoutParams) topLayout.getLayoutParams());
-        AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                topHide = (byte) (hide ? 1 : 0);
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
-        if (hide && topHide == 0) {
-            animatorSet.playTogether(ObjectAnimator.ofObject(viewObj, "marginTop", new IntEvaluator(),
-                            AutoSizeUtils.mm2px(this.mContext, 10.0f),
-                            AutoSizeUtils.mm2px(this.mContext, 0.0f)),
-                    ObjectAnimator.ofObject(viewObj, "height", new IntEvaluator(),
-                            AutoSizeUtils.mm2px(this.mContext, 50.0f),
-                            AutoSizeUtils.mm2px(this.mContext, 1.0f)),
-                    ObjectAnimator.ofFloat(this.topLayout, "alpha", 1.0f, 0.0f));
-            animatorSet.setDuration(200);
-            animatorSet.start();
-            return;
-        }
-        if (!hide && topHide == 1) {
-            animatorSet.playTogether(ObjectAnimator.ofObject(viewObj, "marginTop", new IntEvaluator(),
-                            AutoSizeUtils.mm2px(this.mContext, 0.0f),
-                            AutoSizeUtils.mm2px(this.mContext, 10.0f)),
-                    ObjectAnimator.ofObject(viewObj, "height", new IntEvaluator(),
-                            AutoSizeUtils.mm2px(this.mContext, 1.0f),
-                            AutoSizeUtils.mm2px(this.mContext, 50.0f)),
-                    ObjectAnimator.ofFloat(this.topLayout, "alpha", 0.0f, 1.0f));
-            animatorSet.setDuration(200);
-            animatorSet.start();
-        }
-    }
 
     @Override
     protected void onDestroy() {
