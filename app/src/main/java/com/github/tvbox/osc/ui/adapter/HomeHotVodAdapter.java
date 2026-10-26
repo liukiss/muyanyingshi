@@ -13,6 +13,7 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.bean.Movie;
 import com.github.tvbox.osc.bean.SourceBean;
+import com.github.tvbox.osc.ui.widget.RatioFrameLayout;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.ImgUtil;
 import com.orhanobut.hawk.Hawk;
@@ -65,14 +66,13 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         }
 
         String pic = item.pic == null ? "" : item.pic.trim();
-        ivThumb.setTag(R.id.ivThumb, pic);
         if (!TextUtils.isEmpty(pic)) {
             if (ImgUtil.isBase64Image(pic)) {
-                // 手机版：base64 海报同样圆角裁剪，保持与卡片背景形状一致
-                ivThumb.setImageDrawable(ImgUtil.roundBitmap(mContext.getResources(), ImgUtil.decodeBase64ToBitmap(pic), AutoSizeUtils.mm2px(mContext, 10)));
+                // 手机版：圆角交给 clipRounded 按 View 实际尺寸裁剪
+                ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(pic));
                 ivThumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
             } else {
-                ImgUtil.load(pic, ivThumb, AutoSizeUtils.mm2px(mContext, 10), AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight), item.name);
+                ImgUtil.load(pic, ivThumb, 0, AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight), item.name);
             }
         } else {
             ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
@@ -90,23 +90,14 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
     }
 
     private void applyStyleToImage(final ImageView ivThumb) {
-        if (style != null) {
-            final ViewGroup container = (ViewGroup) ivThumb.getParent();
-            if (!Hawk.get(HawkConfig.HOME_REC_STYLE, true)) {
-                // 横排热播：海报固定列宽，高度按 ratio 换算
-                int w = AutoSizeUtils.mm2px(mContext, 110);
-                ViewGroup.LayoutParams lp = container.getLayoutParams();
-                lp.width = w;
-                lp.height = (int) (w / style.ratio);
-                container.setLayoutParams(lp);
-                return;
-            }
-            // 网格热播：宽度交给网格列宽（MATCH_PARENT），高度 = 列宽 / 站点声明比例。
-            // 同一站点卡片高度统一（行高对齐），标签区已在图片下方独立显示。
-            ViewGroup.LayoutParams containerParams = container.getLayoutParams();
-            containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
-            container.setLayoutParams(containerParams);
-            ImgUtil.applyContainerRatio(ivThumb, style.ratio);
+        final ViewGroup container = (ViewGroup) ivThumb.getParent();
+        // 手机版：高度在测量阶段按站点比例算出（非 style 站点沿用 XML 固定高度），
+        // 不再布局完成后 post 改高，避免 RecyclerView 残留旧测量高度、行距随机变大。
+        // 横排热播的固定列宽已加在 item 根布局上，容器 match_parent 跟随该宽度。
+        if (container instanceof RatioFrameLayout) {
+            ((RatioFrameLayout) container).setRatio(style != null ? style.ratio : 0f);
         }
+        // 圆角与卡片圆角背景保持一致
+        ImgUtil.clipRounded(ivThumb, AutoSizeUtils.mm2px(mContext, 10));
     }
 }

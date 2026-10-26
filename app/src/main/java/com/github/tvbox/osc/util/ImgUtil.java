@@ -4,12 +4,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.TextUtils;
-import android.view.ViewGroup;
+import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
@@ -48,34 +51,23 @@ public class ImgUtil {
     public static int defaultWidth = 244;
     public static int defaultHeight = 320;
 
-    /** 把图片容器的宽高比设置为 ratio（宽/高），宽度撑满网格列宽。 */
-    public static void applyContainerRatio(final ImageView view, final float ratio) {
-        if (view == null || ratio <= 0) return;
-        final ViewGroup container = view.getParent() instanceof ViewGroup ? (ViewGroup) view.getParent() : null;
-        if (container == null) return;
-        final float r = Math.max(0.3f, Math.min(4f, ratio));
-        final Object tag = view.getTag(com.github.tvbox.osc.R.id.ivThumb);
-        Runnable update = new Runnable() {
+    /**
+     * 手机版：按 View 的实际像素尺寸把内容裁剪成圆角矩形（API 21+）。
+     * Glide 的 RoundedCorners 是在解码尺寸上画圆角，再下采样到 View 后圆角会被同比缩小，
+     * 与非 style 站点卡片背景的 10mm 圆角对不上（表现为海报悬浮在圆角背景之上）；
+     * 这里按 View 自身尺寸裁剪，圆角半径与背景完全一致。
+     */
+    public static void clipRounded(final View view, final int radius) {
+        if (view == null || radius <= 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
+        if (view.isClipToOutline()) return;
+        view.setOutlineProvider(new ViewOutlineProvider() {
             @Override
-            public void run() {
-                // 复用保护：等待布局期间若 View 已绑定其它图片，则放弃本次高度设置
-                if (tag != null && !tag.equals(view.getTag(com.github.tvbox.osc.R.id.ivThumb))) return;
-                int w = container.getWidth();
-                if (w <= 0) return;
-                ViewGroup.LayoutParams lp = container.getLayoutParams();
-                if (lp == null) return;
-                int h = (int) (w / r);
-                if (h > 0 && lp.height != h) {
-                    lp.height = h;
-                    container.setLayoutParams(lp);
-                }
+            public void getOutline(View v, Outline outline) {
+                if (v.getWidth() <= 0 || v.getHeight() <= 0) return;
+                outline.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius);
             }
-        };
-        if (container.getWidth() > 0) {
-            update.run();
-        } else {
-            container.post(update);
-        }
+        });
+        view.setClipToOutline(true);
     }
 
     public static class Style {

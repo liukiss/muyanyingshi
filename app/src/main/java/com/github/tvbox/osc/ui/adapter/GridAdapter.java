@@ -10,6 +10,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.Movie;
+import com.github.tvbox.osc.ui.widget.RatioFrameLayout;
 import com.github.tvbox.osc.util.ImgUtil;
 
 import java.util.ArrayList;
@@ -77,14 +78,13 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
             newHeight = (int) (newWidth / style.ratio);
         }
         String pic = item.pic == null ? "" : item.pic.trim();
-        ivThumb.setTag(R.id.ivThumb, pic);
         if (!TextUtils.isEmpty(pic)) {
             if (ImgUtil.isBase64Image(pic)) {
-                // 手机版：base64 海报同样圆角裁剪，保持与卡片背景形状一致
-                ivThumb.setImageDrawable(ImgUtil.roundBitmap(mContext.getResources(), ImgUtil.decodeBase64ToBitmap(pic), AutoSizeUtils.mm2px(mContext, 10)));
+                ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(pic));
                 ivThumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
             } else {
-                ImgUtil.load(pic, ivThumb, AutoSizeUtils.mm2px(mContext, 10), AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight), item.name);
+                // 圆角交给 clipRounded 按 View 实际尺寸裁剪，这里不在解码尺寸上画圆角
+                ImgUtil.load(pic, ivThumb, 0, AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight), item.name);
             }
         } else {
             ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
@@ -94,14 +94,18 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
     }
 
     private void applyStyleToImage(final ImageView ivThumb) {
+        final ViewGroup container = (ViewGroup) ivThumb.getParent();
+        // 手机版：高度在测量阶段按站点比例算出（非 style 站点沿用 XML 固定高度），
+        // 不再布局完成后 post 改高，避免 RecyclerView 残留旧测量高度、行距随机变大。
+        if (container instanceof RatioFrameLayout) {
+            ((RatioFrameLayout) container).setRatio(style != null ? style.ratio : 0f);
+        }
         if (style != null) {
-            // 手机版适配：宽度交给网格列宽（MATCH_PARENT），高度 = 列宽 / 站点声明比例。
-            // 同一站点卡片高度统一（行高对齐），标签区已在图片下方独立显示。
-            final ViewGroup container = (ViewGroup) ivThumb.getParent();
             ViewGroup.LayoutParams containerParams = container.getLayoutParams();
             containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
             container.setLayoutParams(containerParams);
-            ImgUtil.applyContainerRatio(ivThumb, style.ratio);
         }
+        // 圆角与非 style 站点的卡片圆角背景保持一致
+        ImgUtil.clipRounded(ivThumb, AutoSizeUtils.mm2px(mContext, 10));
     }
 }
