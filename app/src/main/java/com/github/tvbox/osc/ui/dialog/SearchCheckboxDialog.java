@@ -37,7 +37,7 @@ public class SearchCheckboxDialog extends BaseDialog{
         if (context instanceof Activity) {
             setOwnerActivity((Activity) context);
         }
-        setCanceledOnTouchOutside(false);
+        setCanceledOnTouchOutside(true);
         setCancelable(true);
         mSourceList = sourceList;
         mCheckSourcees = checkedSources;
@@ -120,7 +120,7 @@ public class SearchCheckboxDialog extends BaseDialog{
         android.view.Window window = getWindow();
         if (window != null) {
             // 手机版：不再铺满全屏，按内容高度估算并限制在屏幕 62% 以内，列表在弹窗内滚动
-            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            android.util.DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
             int width = (int) (dm.widthPixels * 0.9f);
             int maxHeight = (int) (dm.heightPixels * 0.62f);
             int span = mSourceList.size() <= 3 ? 1 : 2;

@@ -73,7 +73,7 @@ public class RemoteTVBox {
             return;
         }
         final String prefix = localIp.substring(0, divisionIp + 1);
-        final int port = 9978;
+        final int port = 1314;
         final AtomicInteger finishedNum = new AtomicInteger(0);
         final AtomicInteger foundNum = new AtomicInteger(0);
         final int total = 254;
