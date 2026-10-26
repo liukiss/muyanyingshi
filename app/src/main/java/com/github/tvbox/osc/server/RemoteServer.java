@@ -60,7 +60,8 @@ import fi.iki.elonen.NanoHTTPD;
  */
 public class RemoteServer extends NanoHTTPD {
     private Context mContext;
-    public static int serverPort = 1314;
+    // 必须保持 9978：配置中心 spider jar 内部固定调用该端口的 /proxy、/media 等接口
+    public static int serverPort = 9978;
     private boolean isStarted = false;
     private DataReceiver mDataReceiver;
     public static String m3u8Content;

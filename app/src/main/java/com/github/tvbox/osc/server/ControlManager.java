@@ -10,6 +10,7 @@ import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.receiver.SearchReceiver;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.HistoryHelper;
+import com.github.tvbox.osc.util.LOG;
 import com.orhanobut.hawk.Hawk;
 
 import org.greenrobot.eventbus.EventBus;
@@ -106,6 +107,8 @@ public class ControlManager {
                 IjkMediaPlayer.setDotPort(Hawk.get(HawkConfig.DOH_URL, 0) > 0, RemoteServer.serverPort);
                 break;
             } catch (IOException ex) {
+                // 端口漂移会让配置中心 jar 的固定端口调用全部失效，必须留痕
+                LOG.e("RemoteServer 启动失败，端口 " + RemoteServer.serverPort + "：" + ex);
                 RemoteServer.serverPort++;
                 mServer.stop();
             }

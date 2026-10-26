@@ -1342,7 +1342,7 @@ public class ApiConfig {
                         if(url.startsWith("http")){
                             url = Base64.encodeToString(url.getBytes("UTF-8"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP);
                         }
-                        url ="http://127.0.0.1:1314/proxy?do=live&type=txt&ext="+url;
+                        url = ControlManager.get().getAddress(true) + "proxy?do=live&type=txt&ext=" + url;
                     }
                     if(type.equals("3")){
                         String jarUrl = livesOBJ.has("jar")?livesOBJ.get("jar").getAsString().trim():"";

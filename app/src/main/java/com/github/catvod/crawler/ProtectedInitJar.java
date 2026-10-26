@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.util.Base64;
 
 import com.github.tvbox.osc.base.App;
+import com.github.tvbox.osc.util.LOG;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -110,7 +111,9 @@ class ProtectedInitJar {
         try {
             Method method = clz.getMethod("startGoProxy", Context.class);
             method.invoke(null, App.getInstance());
-        } catch (Throwable ignored) {
+        } catch (Throwable th) {
+            // 之前完全吞掉异常，GO 代理启动失败时无法定位
+            LOG.e("startGoProxy 调用失败：" + th);
         }
     }
 
