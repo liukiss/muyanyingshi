@@ -24,7 +24,6 @@ import com.github.tvbox.osc.event.ServerEvent;
 import com.github.tvbox.osc.ui.activity.DetailActivity;
 import com.github.tvbox.osc.ui.activity.FastSearchActivity;
 import com.github.tvbox.osc.ui.activity.HistoryActivity;
-import com.github.tvbox.osc.ui.activity.HomeActivity;
 import com.github.tvbox.osc.ui.activity.LiveControlActivity;
 import com.github.tvbox.osc.ui.activity.SearchActivity;
 import com.github.tvbox.osc.ui.activity.SettingActivity;
@@ -83,13 +82,6 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         return this;
     }
 
-    /** 手机版：海报区左右滑动切换分类，交给宿主统一处理 */
-    private void bindCategorySwipe() {
-        if (tvHotList != null && getActivity() instanceof HomeActivity) {
-            ((HomeActivity) getActivity()).bindCategorySwipe(tvHotList);
-        }
-    }
-
     @Override
     protected void onFragmentResume() {
         super.onFragmentResume();
@@ -104,7 +96,6 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             int paddingRight = -tvHotList.mHorizontalSpacingWithMargins / 2 + getResources().getDimensionPixelSize(R.dimen.vs_6);
             int paddingBottom = getResources().getDimensionPixelSize(R.dimen.vs_20);
             tvHotList.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-            bindCategorySwipe();
         } else {
             tvHotList.setVisibility(View.VISIBLE);
             tvHotList.setLayoutManager(new V7LinearLayoutManager(this.mContext, V7LinearLayoutManager.HORIZONTAL, false));
@@ -113,8 +104,6 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             int paddingRight = -tvHotList.mHorizontalSpacingWithMargins / 2 + getResources().getDimensionPixelSize(R.dimen.vs_6);
             int paddingBottom = getResources().getDimensionPixelSize(R.dimen.vs_20);
             tvHotList.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-            // 横向排列时列表自身需要左右滑动，不接管手势
-            tvHotList.setOnTouchListener(null);
         }
         if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2) {
             List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(20);

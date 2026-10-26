@@ -10,15 +10,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.util.TypedValue;
 import android.graphics.drawable.ColorDrawable;
-import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
@@ -117,7 +113,6 @@ public class HomeActivity extends BaseActivity {
     private boolean refreshHomeRec = false;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
-    private long lastSwipeSwitchTime = 0;
     private boolean eventBusRegistered = false;
     private final Runnable mRunnable = new Runnable() {
         @SuppressLint("SetTextI18n")
@@ -190,6 +185,21 @@ public class HomeActivity extends BaseActivity {
         this.contentLayout = findViewById(R.id.contentLayout);
         this.mGridView = findViewById(R.id.mGridView);
         this.mViewPager = findViewById(R.id.mViewPager);
+        // 手机版：左右滑动分类页后，同步分类标签与顶栏，不反向触发 setCurrentItem
+        this.mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                onHomePageSelected(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
         // 手机版适配：顶栏触摸按钮
         findViewById(R.id.tvChangeSourceHome).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -465,89 +475,83 @@ public class HomeActivity extends BaseActivity {
 
     private boolean skipNextUpdate = false;
 
-    /** 手机版：给海报列表挂左右滑动切换分类的手势（不消费事件，滚动/点击/下拉刷新保持原样） */
-    public void bindCategorySwipe(View target) {
-        if (target == null) {
+    /** 手机版：ViewPager 滑动选中某页后同步分类标签（点击标签/弹窗切换时 position == currentSelected，直接返回） */
+    private void onHomePageSelected(int position) {
+        if (position == currentSelected) {
             return;
         }
-        final float[] start = new float[2];
-        final int minDistance = Math.max(ViewConfiguration.get(this).getScaledTouchSlop() * 4,
-                getResources().getDisplayMetrics().widthPixels / 8);
-        final int minFlingVelocity = ViewConfiguration.get(this).getScaledMinimumFlingVelocity();
-        final GestureDetector detector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return true;
+        currentSelected = position;
+        sortFocused = position;
+        sortChange = false;
+        mHandler.removeCallbacks(mDataRunnable);
+        syncSortBarByPage(position);
+        changeTop(position != 0);
+        if (position >= 0 && position < fragments.size()) {
+            BaseLazyFragment baseLazyFragment = fragments.get(position);
+            if (baseLazyFragment instanceof GridFragment && ((GridFragment) baseLazyFragment).shouldReloadOnSelect()) {
+                ((GridFragment) baseLazyFragment).forceRefresh();
             }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (e1 == null || e2 == null) {
-                    return false;
-                }
-                float dx = e2.getX() - e1.getX();
-                float dy = e2.getY() - e1.getY();
-                if (Math.abs(dx) < minDistance || Math.abs(dx) < Math.abs(dy) * 1.5f
-                        || Math.abs(velocityX) < minFlingVelocity) {
-                    return false;
-                }
-                switchSortBySwipe(dx < 0 ? 1 : -1);
-                return true;
-            }
-        });
-        target.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                detector.onTouchEvent(event);
-                switch (event.getActionMasked()) {
-                    case MotionEvent.ACTION_DOWN:
-                        start[0] = event.getX();
-                        start[1] = event.getY();
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        // 慢速拖动未触发 fling 时，按累计位移补一次判定
-                        float dx = event.getX() - start[0];
-                        float dy = event.getY() - start[1];
-                        if (Math.abs(dx) >= minDistance && Math.abs(dx) > Math.abs(dy) * 1.5f) {
-                            switchSortBySwipe(dx < 0 ? 1 : -1);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                return false;
-            }
-        });
+        }
     }
 
-    /** 手机版：海报区左右滑动切换分类（-1 上一个 / +1 下一个），复用标签点击的切换链路 */
-    public void switchSortBySwipe(int direction) {
+    private void syncSortBarByPage(final int position) {
         if (sortAdapter == null || sortAdapter.getData() == null
-                || sortAdapter.getData().isEmpty() || mViewPager == null) {
+                || position < 0 || position >= sortAdapter.getData().size()) {
             return;
         }
-        int target = currentSelected + direction;
-        if (target < 0 || target >= sortAdapter.getData().size()) {
-            return;
-        }
-        long now = SystemClock.elapsedRealtime();
-        if (now - lastSwipeSwitchTime < 300) {
-            return;
-        }
-        lastSwipeSwitchTime = now;
-        selectSortFromPopup(target);
-        // 触屏模式下部分机型 requestFocus 不会触发 onItemSelected，这里兜底保证一定完成切换
-        final int expect = target;
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (currentSelected != expect && sortFocused != expect) {
-                    sortFocused = expect;
-                    sortChange = true;
-                    mDataRunnable.run();
+        View child = mGridView.getLayoutManager() != null
+                ? mGridView.getLayoutManager().findViewByPosition(position) : null;
+        if (child == null) {
+            mGridView.setSelectedPosition(position);
+            mGridView.scrollToPosition(position);
+            mGridView.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    RecyclerView.ViewHolder holder = mGridView.findViewHolderForAdapterPosition(position);
+                    if (holder != null) {
+                        applySortVisual(holder.itemView, position);
+                        holder.itemView.requestFocus();
+                    }
                 }
+            }, 100);
+            return;
+        }
+        applySortVisual(child, position);
+        child.requestFocus();
+    }
+
+    /** 直接把分类标签切到选中态，不依赖触屏模式下可能失效的焦点回调 */
+    private void applySortVisual(View view, int position) {
+        if (view == null) {
+            return;
+        }
+        if (sortFocusView != null && sortFocusView != view) {
+            TextView oldTitle = sortFocusView.findViewById(R.id.tvTitle);
+            if (oldTitle != null) {
+                oldTitle.getPaint().setFakeBoldText(false);
+                oldTitle.setTextColor(getResources().getColor(R.color.color_BBFFFFFF));
+                oldTitle.invalidate();
             }
-        }, 180);
+            sortFocusView.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).start();
+            sortFocusView.findViewById(R.id.tvFilter).setVisibility(View.GONE);
+            sortFocusView.findViewById(R.id.tvFilterColor).setVisibility(View.GONE);
+        }
+        currentView = view;
+        sortFocusView = view;
+        view.animate().scaleX(1.1f).scaleY(1.1f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
+        TextView textView = view.findViewById(R.id.tvTitle);
+        if (textView != null) {
+            textView.getPaint().setFakeBoldText(true);
+            textView.setTextColor(getResources().getColor(R.color.color_FFFFFF));
+            textView.invalidate();
+        }
+        MovieSort.SortData sortData = sortAdapter.getItem(position);
+        if (sortData != null && !sortData.filters.isEmpty()) {
+            showFilterIcon(sortData.filterSelectCount());
+        } else {
+            view.findViewById(R.id.tvFilter).setVisibility(View.GONE);
+            view.findViewById(R.id.tvFilterColor).setVisibility(View.GONE);
+        }
     }
 
     private void initViewModel() {
