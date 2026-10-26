@@ -16,6 +16,7 @@ import android.view.ViewOutlineProvider;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -58,8 +59,13 @@ public class ImgUtil {
      * 这里按 View 自身尺寸裁剪，圆角半径与背景完全一致。
      */
     public static void clipRounded(final View view, final int radius) {
-        if (view == null || radius <= 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
-        if (view.isClipToOutline()) return;
+        if (view == null || radius <= 0) return;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
+        clipRoundedLollipop(view, radius);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private static void clipRoundedLollipop(final View view, final int radius) {
         view.setOutlineProvider(new ViewOutlineProvider() {
             @Override
             public void getOutline(View v, Outline outline) {
