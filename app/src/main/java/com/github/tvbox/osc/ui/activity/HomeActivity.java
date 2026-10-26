@@ -10,11 +10,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.util.TypedValue;
 import android.graphics.drawable.ColorDrawable;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
@@ -113,6 +117,7 @@ public class HomeActivity extends BaseActivity {
     private boolean refreshHomeRec = false;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
+    private long lastSwipeSwitchTime = 0;
     private boolean eventBusRegistered = false;
     private final Runnable mRunnable = new Runnable() {
         @SuppressLint("SetTextI18n")
@@ -459,6 +464,91 @@ public class HomeActivity extends BaseActivity {
     }
 
     private boolean skipNextUpdate = false;
+
+    /** 手机版：给海报列表挂左右滑动切换分类的手势（不消费事件，滚动/点击/下拉刷新保持原样） */
+    public void bindCategorySwipe(View target) {
+        if (target == null) {
+            return;
+        }
+        final float[] start = new float[2];
+        final int minDistance = Math.max(ViewConfiguration.get(this).getScaledTouchSlop() * 4,
+                getResources().getDisplayMetrics().widthPixels / 8);
+        final int minFlingVelocity = ViewConfiguration.get(this).getScaledMinimumFlingVelocity();
+        final GestureDetector detector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) {
+                    return false;
+                }
+                float dx = e2.getX() - e1.getX();
+                float dy = e2.getY() - e1.getY();
+                if (Math.abs(dx) < minDistance || Math.abs(dx) < Math.abs(dy) * 1.5f
+                        || Math.abs(velocityX) < minFlingVelocity) {
+                    return false;
+                }
+                switchSortBySwipe(dx < 0 ? 1 : -1);
+                return true;
+            }
+        });
+        target.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                detector.onTouchEvent(event);
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        start[0] = event.getX();
+                        start[1] = event.getY();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        // 慢速拖动未触发 fling 时，按累计位移补一次判定
+                        float dx = event.getX() - start[0];
+                        float dy = event.getY() - start[1];
+                        if (Math.abs(dx) >= minDistance && Math.abs(dx) > Math.abs(dy) * 1.5f) {
+                            switchSortBySwipe(dx < 0 ? 1 : -1);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                return false;
+            }
+        });
+    }
+
+    /** 手机版：海报区左右滑动切换分类（-1 上一个 / +1 下一个），复用标签点击的切换链路 */
+    public void switchSortBySwipe(int direction) {
+        if (sortAdapter == null || sortAdapter.getData() == null
+                || sortAdapter.getData().isEmpty() || mViewPager == null) {
+            return;
+        }
+        int target = currentSelected + direction;
+        if (target < 0 || target >= sortAdapter.getData().size()) {
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastSwipeSwitchTime < 300) {
+            return;
+        }
+        lastSwipeSwitchTime = now;
+        selectSortFromPopup(target);
+        // 触屏模式下部分机型 requestFocus 不会触发 onItemSelected，这里兜底保证一定完成切换
+        final int expect = target;
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (currentSelected != expect && sortFocused != expect) {
+                    sortFocused = expect;
+                    sortChange = true;
+                    mDataRunnable.run();
+                }
+            }
+        }, 180);
+    }
 
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);

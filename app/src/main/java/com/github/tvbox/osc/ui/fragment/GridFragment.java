@@ -26,6 +26,7 @@ import com.github.tvbox.osc.bean.MovieSort;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.ui.activity.DetailActivity;
 import com.github.tvbox.osc.ui.activity.FastSearchActivity;
+import com.github.tvbox.osc.ui.activity.HomeActivity;
 import com.github.tvbox.osc.ui.activity.SearchActivity;
 import com.github.tvbox.osc.ui.adapter.GridAdapter;
 import com.github.tvbox.osc.ui.adapter.GridFilterKVAdapter;
@@ -167,6 +168,7 @@ public class GridFragment extends BaseLazyFragment {
         this.hasActionItems = info.hasActionItems;
         this.focusedView = info.focusedView;
         this.mGridView.setVisibility(View.VISIBLE);
+        bindCategorySwipe();
 //        if(this.focusedView != null){ this.focusedView.requestFocus(); }
         if(mGridView != null) mGridView.requestFocus();
         return true;
@@ -190,6 +192,7 @@ public class GridFragment extends BaseLazyFragment {
             mGridView.setVisibility(View.VISIBLE);
         }
         mGridView.setHasFixedSize(true);
+        bindCategorySwipe();
         style=ImgUtil.initStyle();
         gridAdapter = new GridAdapter(isFolederMode(), style);
         this.page =1;
@@ -324,6 +327,7 @@ public class GridFragment extends BaseLazyFragment {
             public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
             }
         });
+        bindCategorySwipe();
         loadSirView = (View) mGridView.getParent();
         if (loadSirView != null) {
             loadSirView.setOnTouchListener(new View.OnTouchListener() {
@@ -332,6 +336,13 @@ public class GridFragment extends BaseLazyFragment {
                     return handlePullRefreshTouch(v, event);
                 }
             });
+        }
+    }
+
+    /** 手机版：海报区左右滑动切换分类，交给宿主统一处理 */
+    private void bindCategorySwipe() {
+        if (mGridView != null && getActivity() instanceof HomeActivity) {
+            ((HomeActivity) getActivity()).bindCategorySwipe(mGridView);
         }
     }
 
