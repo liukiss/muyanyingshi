@@ -14,10 +14,6 @@ function danmuApi() {
     doAction('danmuApi', { url: $('#diy_danmu_api_url').val() });
 }
 
-function push() {
-    doAction('push', { url: $('#push_url').val() });
-}
-
 function doAction(action, kv) {
     kv['do'] = action;
     // alert(JSON.stringify(kv));
@@ -273,9 +269,7 @@ $(function () {
 });
 
 var url = window.location.href;
-if (url.indexOf('push.html') > 0)
-    showPanel(2);
-else if (url.indexOf('api.html') > 0)
+if (url.indexOf('api.html') > 0)
     showPanel(3);
 else if (url.indexOf('all.html') > 0)
     showPanel(3);

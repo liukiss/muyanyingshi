@@ -48,6 +48,7 @@ import com.github.tvbox.osc.ui.adapter.CategoryGridAdapter;
 import com.github.tvbox.osc.ui.adapter.HomePageAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.adapter.SortAdapter;
+import com.github.tvbox.osc.ui.dialog.PushDialog;
 import com.github.tvbox.osc.ui.dialog.SelectDialog;
 import com.github.tvbox.osc.ui.dialog.TipDialog;
 import com.github.tvbox.osc.ui.fragment.GridFragment;
@@ -205,7 +206,8 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
-                jumpActivity(PushActivity.class);
+                // 手机版：推送改为弹窗输入地址，不再打开横屏二维码页面
+                new PushDialog(HomeActivity.this).show();
             }
         });
         // 分类行最右侧按钮：下拉弹窗展示全部分类标签

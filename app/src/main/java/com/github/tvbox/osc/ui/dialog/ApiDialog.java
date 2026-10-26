@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,7 +16,6 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.ui.adapter.ApiHistoryDialogAdapter;
-import com.github.tvbox.osc.ui.tv.QRCodeGen;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.HistoryHelper;
 import com.hjq.permissions.OnPermissionCallback;
@@ -32,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.jessyan.autosize.utils.AutoSizeUtils;
-
 /**
  * 描述
  *
@@ -41,7 +37,6 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
  * @since 2020/12/27
  */
 public class ApiDialog extends BaseDialog {
-    private ImageView ivQRCode;
     private TextView tvAddress;
     private EditText inputApi;
     private EditText inputApiLive;
@@ -61,7 +56,6 @@ public class ApiDialog extends BaseDialog {
         super(context);
         setContentView(R.layout.dialog_api);
         setCanceledOnTouchOutside(false);
-        ivQRCode = findViewById(R.id.ivQRCode);
         tvAddress = findViewById(R.id.tvAddress);
         inputApi = findViewById(R.id.input);
         inputApiLive = findViewById(R.id.inputLive);
@@ -167,7 +161,7 @@ public class ApiDialog extends BaseDialog {
                 return false;
             }
         });
-        refreshQRCode();
+        refreshAddress();
     }
 
     private boolean isSoftKeyboardEnter(int actionId, KeyEvent event) {
@@ -184,10 +178,9 @@ public class ApiDialog extends BaseDialog {
         inputConfirm.requestFocus();
     }
 
-    private void refreshQRCode() {
+    private void refreshAddress() {
         String address = ControlManager.get().getAddress(false);
-        tvAddress.setText(String.format("手机/电脑扫描上方二维码或者直接浏览器访问地址\n%s", address));
-        ivQRCode.setImageBitmap(QRCodeGen.generateBitmap(address+"api.html", AutoSizeUtils.mm2px(getContext(), 300), AutoSizeUtils.mm2px(getContext(), 300)));
+        tvAddress.setText(String.format("手机/电脑浏览器访问以下地址进行接口配置\n%s", address + "api.html"));
     }
 
     private void saveAndDismiss() {

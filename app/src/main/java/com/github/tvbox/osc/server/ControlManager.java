@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 
 import com.github.tvbox.osc.event.RefreshEvent;
-import com.github.tvbox.osc.receiver.PushReceiver;
 import com.github.tvbox.osc.receiver.SearchReceiver;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.HistoryHelper;
@@ -99,11 +98,6 @@ public class ControlManager {
                 public void onDanmuApiReceived(String url) {
                     Hawk.put(HawkConfig.DANMU_API, TextUtils.isEmpty(url) ? "" : url);
                     EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SET_DANMU_SETTINGS, false));
-                }
-
-                @Override
-                public void onPushReceived(String url) {
-                    PushReceiver.send(mContext, url);
                 }
             });
             try {

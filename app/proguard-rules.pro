@@ -230,8 +230,6 @@
 -keep class com.whl.quickjs.** {*;}
 # 支持影视的ali相关的jar
 -keep class com.google.gson.**{*;}
-# Zxing
--keep class com.google.zxing.**{*;}
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);

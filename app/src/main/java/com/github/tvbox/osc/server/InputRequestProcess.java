@@ -53,13 +53,6 @@ public class InputRequestProcess implements RequestProcess {
                             mDataReceiver.onDanmuApiReceived(params.get("url").trim());
                             break;
                         }
-                        case "push": {
-                            String url = params.get("url");
-                            if (url != null && url.trim().length() > 0) {
-                                mDataReceiver.onPushReceived(url.trim());
-                            }
-                            break;
-                        }
                     }
                 }
                 return RemoteServer.createPlainTextResponse(NanoHTTPD.Response.Status.OK, "ok");

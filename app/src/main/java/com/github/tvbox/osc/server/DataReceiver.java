@@ -18,6 +18,4 @@ public interface DataReceiver {
     void onLiveApiReceived(String url);
 
     void onDanmuApiReceived(String url);
-
-    void onPushReceived(String url);
 }
