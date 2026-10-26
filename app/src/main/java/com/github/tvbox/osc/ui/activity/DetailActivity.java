@@ -2139,6 +2139,29 @@ public class DetailActivity extends BaseActivity {
         landscapeDesign = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE;
         me.jessyan.autosize.AutoSizeCompat.autoConvertDensityOfCustomAdapt(super.getResources(), this);
         getWindow().getDecorView().requestLayout();
+        // 手机版：条目里的 mm 尺寸在 inflate 时就换算成像素，requestLayout 不会重新换算。
+        // 返回竖屏后，横屏（640 基准）期间创建过的资源标签 / 集数条目会残留偏大的像素尺寸，
+        // 表现为标签或按钮随机变大，因此丢弃复用池并按当前基准重建这些列表。
+        if (!landscapeDesign) {
+            getWindow().getDecorView().post(this::resetSeriesItemViews);
+        }
+    }
+
+    private void resetSeriesItemViews() {
+        resetItemDensity(mGridViewFlag, seriesFlagAdapter);
+        resetItemDensity(mSeriesGroupView, seriesGroupAdapter);
+        resetItemDensity(mGridViewQuality, qualityAdapter);
+        resetItemDensity(mGridView, seriesAdapter);
+    }
+
+    private void resetItemDensity(TvRecyclerView listView, BaseQuickAdapter adapter) {
+        if (listView == null || adapter == null) return;
+        int first = listView.getFirstVisiblePosition();
+        // 先解绑（旧条目会被回收进复用池），再清空复用池，最后重新绑定，强制按当前密度重新 inflate
+        listView.setAdapter(null);
+        listView.getRecycledViewPool().clear();
+        listView.setAdapter(adapter);
+        if (first > 0) listView.scrollToPosition(first);
     }
 
     void ensurePlayFragment() {
