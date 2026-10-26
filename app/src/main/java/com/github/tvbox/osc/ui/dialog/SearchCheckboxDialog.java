@@ -69,9 +69,8 @@ public class SearchCheckboxDialog extends BaseDialog{
         mGridView.setHasFixedSize(true);
 
         int size = mSourceList.size();
-        int spanCount = (int) Math.floor(size / 10);
-        if (spanCount <= 0) spanCount = 1;
-        if (spanCount > 3) spanCount = 3;
+        // 手机版：两列更适合手机宽度，源较少时单列铺满
+        int spanCount = size <= 3 ? 1 : 2;
         mGridView.setLayoutManager(new V7GridLayoutManager(getContext(), spanCount));
 
         mGridView.setAdapter(checkboxSearchAdapter);
@@ -120,7 +119,15 @@ public class SearchCheckboxDialog extends BaseDialog{
         if (!isShowing()) return;
         android.view.Window window = getWindow();
         if (window != null) {
-            window.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT, android.view.WindowManager.LayoutParams.MATCH_PARENT);
+            // 手机版：不再铺满全屏，按内容高度估算并限制在屏幕 62% 以内，列表在弹窗内滚动
+            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            int width = (int) (dm.widthPixels * 0.9f);
+            int maxHeight = (int) (dm.heightPixels * 0.62f);
+            int span = mSourceList.size() <= 3 ? 1 : 2;
+            int rows = (mSourceList.size() + span - 1) / span;
+            int contentHeight = me.jessyan.autosize.utils.AutoSizeUtils.mm2px(getContext(), 56f)
+                    + rows * me.jessyan.autosize.utils.AutoSizeUtils.mm2px(getContext(), 32f);
+            window.setLayout(width, Math.min(contentHeight, maxHeight));
         }
     }
 

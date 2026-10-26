@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.event.RefreshEvent;
-import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.ui.adapter.ApiHistoryDialogAdapter;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.HistoryHelper;
@@ -37,7 +36,6 @@ import java.util.List;
  * @since 2020/12/27
  */
 public class ApiDialog extends BaseDialog {
-    private TextView tvAddress;
     private EditText inputApi;
     private EditText inputApiLive;
     private View inputConfirm;
@@ -55,8 +53,7 @@ public class ApiDialog extends BaseDialog {
     public ApiDialog(@NonNull @NotNull Context context) {
         super(context);
         setContentView(R.layout.dialog_api);
-        setCanceledOnTouchOutside(false);
-        tvAddress = findViewById(R.id.tvAddress);
+        setCanceledOnTouchOutside(true);
         inputApi = findViewById(R.id.input);
         inputApiLive = findViewById(R.id.inputLive);
         inputConfirm = findViewById(R.id.inputConfirm);
@@ -79,6 +76,12 @@ public class ApiDialog extends BaseDialog {
             @Override
             public void onClick(View v) {
                 saveAndDismiss();
+            }
+        });
+        findViewById(R.id.apiBack).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
             }
         });
         findViewById(R.id.apiHistory).setOnClickListener(new View.OnClickListener() {
@@ -161,7 +164,6 @@ public class ApiDialog extends BaseDialog {
                 return false;
             }
         });
-        refreshAddress();
     }
 
     private boolean isSoftKeyboardEnter(int actionId, KeyEvent event) {
@@ -176,11 +178,6 @@ public class ApiDialog extends BaseDialog {
         if (imm != null) imm.hideSoftInputFromWindow(inputApiLive.getWindowToken(), 0);
         inputApiLive.clearFocus();
         inputConfirm.requestFocus();
-    }
-
-    private void refreshAddress() {
-        String address = ControlManager.get().getAddress(false);
-        tvAddress.setText(String.format("手机/电脑浏览器访问以下地址进行接口配置\n%s", address + "api.html"));
     }
 
     private void saveAndDismiss() {
