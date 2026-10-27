@@ -1,4 +1,4 @@
-package com.github.tvbox.osc.ui.activity;
+package com.github.tvbox.osc.ui.fragment;
 
 import android.app.Activity;
 import android.content.Context;
@@ -29,12 +29,14 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.catvod.crawler.JsLoader;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
-import com.github.tvbox.osc.base.BaseActivity;
+import com.github.tvbox.osc.base.BaseLazyFragment;
 import com.github.tvbox.osc.bean.AbsXml;
 import com.github.tvbox.osc.bean.Movie;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.event.ServerEvent;
+import com.github.tvbox.osc.ui.activity.DetailActivity;
+import com.github.tvbox.osc.ui.activity.FastSearchActivity;
 import com.github.tvbox.osc.ui.adapter.SearchAdapter;
 import com.github.tvbox.osc.ui.dialog.RemoteDialog;
 import com.github.tvbox.osc.ui.dialog.SearchCheckboxDialog;
@@ -81,7 +83,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @date :2020/12/23
  * @description:
  */
-public class SearchActivity extends BaseActivity {
+public class SearchFragment extends BaseLazyFragment {
     private static final String HOT_SEARCH_URL = "https://movie.douban.com/j/search_subjects?type=tv&tag=%E7%83%AD%E9%97%A8&sort=recommend&page_limit=20&page_start=0";
     private static final int SEARCH_THREAD_COUNT = 6;
     private static final int SEARCH_MAX_THREAD_COUNT = Build.VERSION.SDK_INT >= 35 ? 24 : Build.VERSION.SDK_INT >= 30 ? 18 : 12;
@@ -144,8 +146,7 @@ public class SearchActivity extends BaseActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onFragmentResume() {
         if (searchPaused) {
             resumePausedSearches();
         }
@@ -165,7 +166,7 @@ public class SearchActivity extends BaseActivity {
         focusView.post(new Runnable() {
             @Override
             public void run() {
-                if (isFinishing()) return;
+                if (isActivityUnavailable()) return;
                 focusView.requestFocus();
                 focusView.requestFocusFromTouch();
                 // 手机版适配：进入页面主动弹出系统输入法（manifest 为 stateHidden）
@@ -356,7 +357,7 @@ public class SearchActivity extends BaseActivity {
             public void onClick(View view) {
                 List<SourceBean> searchAbleSource = ApiConfig.get().getSearchSourceBeanList();
                 if (mSearchCheckboxDialog == null) {
-                    mSearchCheckboxDialog = new SearchCheckboxDialog(SearchActivity.this, searchAbleSource, mCheckSources);
+                    mSearchCheckboxDialog = new SearchCheckboxDialog(mActivity, searchAbleSource, mCheckSources);
                 }else {
                     if(searchAbleSource.size()!=mSearchCheckboxDialog.mSourceList.size()){
                         mSearchCheckboxDialog.setMSourceList(searchAbleSource);
@@ -514,7 +515,7 @@ public class SearchActivity extends BaseActivity {
                 LinearLayout row = null;
                 int rowWidth = 0;
                 for (final String word : words) {
-                    TextView item = new TextView(SearchActivity.this);
+                    TextView item = new TextView(mActivity);
                     item.setText(word);
                     item.setSingleLine(true);
                     item.setGravity(Gravity.CENTER);
@@ -534,7 +535,7 @@ public class SearchActivity extends BaseActivity {
                     item.setEllipsize(TextUtils.TruncateAt.END);
                     int rowItemWidth = itemWidth + itemMargin * 2;
                     if (row == null || (rowWidth > 0 && rowWidth + rowItemWidth > availableWidth)) {
-                        row = new LinearLayout(SearchActivity.this);
+                        row = new LinearLayout(mActivity);
                         row.setOrientation(LinearLayout.HORIZONTAL);
                         GridLayout.LayoutParams rowParams = new GridLayout.LayoutParams(
                                 GridLayout.spec(GridLayout.UNDEFINED),
@@ -598,17 +599,16 @@ public class SearchActivity extends BaseActivity {
         jumpActivity(DetailActivity.class, bundle);
     }
 
-    @Override
-    public void onBackPressed() {
+    public boolean handleBack() {
         if (!folderHistory.isEmpty()) {
             folderLoading = false;
             List<Movie.Video> previous = folderHistory.remove(folderHistory.size() - 1);
             showSuccess();
             mGridView.setVisibility(View.VISIBLE);
             searchAdapter.setNewData(previous);
-            return;
+            return true;
         }
-        super.onBackPressed();
+        return false;
     }
 
     /**
@@ -686,9 +686,9 @@ public class SearchActivity extends BaseActivity {
     private void initData() {
         initCheckedSourcesForSearch();
         applySearchWordMode();
-        Intent intent = getIntent();
-        if (intent != null && intent.hasExtra("title")) {
-            String title = intent.getStringExtra("title");
+        Bundle args = getArguments();
+        if (args != null && args.containsKey("title")) {
+            String title = args.getString("title");
             showLoading();
             if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, true)){
                 Bundle bundle = new Bundle();
@@ -996,7 +996,7 @@ public class SearchActivity extends BaseActivity {
                 if (!isCurrentSearchToken(searchToken)) return;
                 if (markSearchFinished(sourceKey, searchToken)) {
                     releaseSearchSlotAndStartNext(sourceKey, searchToken);
-                    runOnUiThread(new Runnable() {
+                    mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             finishSearchIfDone();
@@ -1217,7 +1217,7 @@ public class SearchActivity extends BaseActivity {
             } catch (Throwable th) {
                 th.printStackTrace();
                 if (markSearchFinished(sourceKey, searchToken)) {
-                    runOnUiThread(new Runnable() {
+                    mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             finishSearchIfDone();
@@ -1234,7 +1234,7 @@ public class SearchActivity extends BaseActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         cancel();
         try {
@@ -1253,8 +1253,12 @@ public class SearchActivity extends BaseActivity {
         EventBus.getDefault().unregister(this);
     }
 
-    private void hiddenImm()
-    {
+    private boolean isActivityUnavailable() {
+        return mActivity == null || mActivity.isFinishing()
+                || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && mActivity.isDestroyed());
+    }
+
+    private void hiddenImm() {
         InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
             imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);

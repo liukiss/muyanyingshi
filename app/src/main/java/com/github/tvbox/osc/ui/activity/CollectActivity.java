@@ -135,10 +135,9 @@ public class CollectActivity extends BaseActivity {
                             bundle.putBoolean("collect", true);
                             jumpActivity(DetailActivity.class, bundle);
                         } else {
-                            Intent newIntent = new Intent(mContext, SearchActivity.class);
-                            newIntent.putExtra("title", vodInfo.name);
-                            newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                            startActivity(newIntent);
+                            Bundle bundle = new Bundle();
+                            bundle.putString("title", vodInfo.name);
+                            MainActivity.openTab(mContext, MainActivity.TAB_SEARCH, bundle);
                         }
                     }
                 }
@@ -154,7 +153,7 @@ public class CollectActivity extends BaseActivity {
                     if (Hawk.get(HawkConfig.FAST_SEARCH_MODE, true)) {
                         jumpActivity(FastSearchActivity.class, bundle);
                     } else {
-                        jumpActivity(SearchActivity.class, bundle);
+                        MainActivity.openTab(mContext, MainActivity.TAB_SEARCH, bundle);
                     }
                 }
                 return true;

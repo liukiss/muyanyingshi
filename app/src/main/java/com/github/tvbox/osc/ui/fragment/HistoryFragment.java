@@ -1,4 +1,4 @@
-package com.github.tvbox.osc.ui.activity;
+package com.github.tvbox.osc.ui.fragment;
 
 import android.os.Bundle;
 import android.view.View;
@@ -9,12 +9,14 @@ import android.widget.TextView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
-import com.github.tvbox.osc.base.BaseActivity;
-import com.github.tvbox.osc.bean.Movie;
+import com.github.tvbox.osc.base.BaseLazyFragment;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.cache.RoomDataManger;
 import com.github.tvbox.osc.event.RefreshEvent;
+import com.github.tvbox.osc.ui.activity.DetailActivity;
+import com.github.tvbox.osc.ui.activity.FastSearchActivity;
+import com.github.tvbox.osc.ui.activity.MainActivity;
 import com.github.tvbox.osc.ui.adapter.HistoryAdapter;
 import com.github.tvbox.osc.ui.dialog.ConfirmClearDialog;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
@@ -31,11 +33,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author pj567
- * @date :2021/1/7
- * @description:
+ * 手机版：历史记录页（原 HistoryActivity 迁移为 Tab Fragment）
  */
-public class HistoryActivity extends BaseActivity {
+public class HistoryFragment extends BaseLazyFragment {
     private ImageView tvDelete;
     private ImageView tvClear;
     private ImageView tvBack;
@@ -43,15 +43,11 @@ public class HistoryActivity extends BaseActivity {
     private TvRecyclerView mGridView;
     public static HistoryAdapter historyAdapter;
     private boolean delMode = false;
+    private boolean eventBusRegistered = false;
 
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_history;
-    }
-
-    @Override
-    protected boolean shouldRefreshAutoSize() {
-        return true;
     }
 
     @Override
@@ -61,14 +57,15 @@ public class HistoryActivity extends BaseActivity {
     }
 
     private void toggleDelMode() {
-    	HawkConfig.hotVodDelete = !HawkConfig.hotVodDelete;
+        HawkConfig.hotVodDelete = !HawkConfig.hotVodDelete;
         historyAdapter.notifyDataSetChanged();
         delMode = !delMode;
-        tvDelTip.setVisibility(delMode ? View.VISIBLE : View.GONE);        
+        tvDelTip.setVisibility(delMode ? View.VISIBLE : View.GONE);
     }
 
     private void initView() {
         EventBus.getDefault().register(this);
+        eventBusRegistered = true;
         tvDelete = findViewById(R.id.tvDelete);
         tvClear = findViewById(R.id.tvClear);
         tvBack = findViewById(R.id.tvBack);
@@ -94,7 +91,10 @@ public class HistoryActivity extends BaseActivity {
         tvBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                // 单 Activity：返回主界面
+                if (mActivity != null) {
+                    mActivity.onBackPressed();
+                }
             }
         });
         mGridView.setOnInBorderKeyEventListener(new TvRecyclerView.OnInBorderKeyEventListener() {
@@ -142,16 +142,16 @@ public class HistoryActivity extends BaseActivity {
                         bundle.putString("id", vodInfo.id);
                         bundle.putString("sourceKey", vodInfo.sourceKey);
                         SourceBean sourceBean = ApiConfig.get().getSource(vodInfo.sourceKey);
-                        if(sourceBean!=null){
+                        if (sourceBean != null) {
                             bundle.putString("title", vodInfo.name);
                             bundle.putString("picture", vodInfo.pic);
                             jumpActivity(DetailActivity.class, bundle);
-                        }else {
+                        } else {
                             bundle.putString("title", vodInfo.name);
-                            if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, true)){
+                            if (Hawk.get(HawkConfig.FAST_SEARCH_MODE, true)) {
                                 jumpActivity(FastSearchActivity.class, bundle);
-                            }else {
-                                jumpActivity(SearchActivity.class, bundle);
+                            } else {
+                                MainActivity.openTab(mContext, MainActivity.TAB_SEARCH, bundle);
                             }
                         }
                     }
@@ -168,7 +168,7 @@ public class HistoryActivity extends BaseActivity {
                     if (Hawk.get(HawkConfig.FAST_SEARCH_MODE, true)) {
                         jumpActivity(FastSearchActivity.class, bundle);
                     } else {
-                        jumpActivity(SearchActivity.class, bundle);
+                        MainActivity.openTab(mContext, MainActivity.TAB_SEARCH, bundle);
                     }
                 }
                 return true;
@@ -176,16 +176,24 @@ public class HistoryActivity extends BaseActivity {
         });
     }
 
+    /** 返回键：删除模式下先退出删除模式 */
+    public boolean handleBack() {
+        if (delMode) {
+            toggleDelMode();
+            return true;
+        }
+        return false;
+    }
+
     private void initData() {
         List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(100);
         List<VodInfo> vodInfoList = new ArrayList<>();
         for (VodInfo vodInfo : allVodRecord) {
-            if (vodInfo.playNote != null && !vodInfo.playNote.isEmpty())vodInfo.note = "上次看到" + vodInfo.playNote;
+            if (vodInfo.playNote != null && !vodInfo.playNote.isEmpty()) vodInfo.note = "上次看到" + vodInfo.playNote;
             vodInfoList.add(vodInfo);
         }
         historyAdapter.setNewData(vodInfoList);
     }
-
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void refresh(RefreshEvent event) {
@@ -195,8 +203,7 @@ public class HistoryActivity extends BaseActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onFragmentPause() {
         // 删除模式是全局 UI 状态（主界面影片的删除图标也依赖它），
         // 离开本页时必须立即复位，否则会把删除模式带回主界面
         HawkConfig.hotVodDelete = false;
@@ -210,17 +217,11 @@ public class HistoryActivity extends BaseActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (delMode) {
-            toggleDelMode();
-            return;
+    public void onDestroy() {
+        if (eventBusRegistered) {
+            EventBus.getDefault().unregister(this);
+            eventBusRegistered = false;
         }
-        super.onBackPressed();
+        super.onDestroy();
     }
 }

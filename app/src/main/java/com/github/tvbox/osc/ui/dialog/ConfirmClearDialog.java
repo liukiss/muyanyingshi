@@ -11,7 +11,7 @@ import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.cache.RoomDataManger;
 import com.github.tvbox.osc.cache.VodCollect;
 import com.github.tvbox.osc.ui.activity.CollectActivity;
-import com.github.tvbox.osc.ui.activity.HistoryActivity;
+import com.github.tvbox.osc.ui.fragment.HistoryFragment;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -41,8 +41,8 @@ public class ConfirmClearDialog extends BaseDialog {
                     // if removing all History
                 } else if (type == "History") {
                     List<VodInfo> vodInfoList = new ArrayList<>();
-                    HistoryActivity.historyAdapter.setNewData(vodInfoList);
-                    HistoryActivity.historyAdapter.notifyDataSetChanged();
+                    HistoryFragment.historyAdapter.setNewData(vodInfoList);
+                    HistoryFragment.historyAdapter.notifyDataSetChanged();
                     RoomDataManger.deleteVodRecordAll();
                 }
 

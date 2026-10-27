@@ -1,4 +1,4 @@
-package com.github.tvbox.osc.ui.activity;
+package com.github.tvbox.osc.ui.fragment;
 
 import android.annotation.SuppressLint;
 import android.net.Uri;
@@ -20,12 +20,14 @@ import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.base.BaseActivity;
+import com.github.tvbox.osc.base.BaseLazyFragment;
 import com.github.tvbox.osc.bean.Epginfo;
 import com.github.tvbox.osc.bean.LiveChannelGroup;
 import com.github.tvbox.osc.bean.LiveChannelItem;
 import com.github.tvbox.osc.bean.LivePlayerManager;
 import com.github.tvbox.osc.bean.LiveSettingGroup;
 import com.github.tvbox.osc.bean.LiveSettingItem;
+import com.github.tvbox.osc.ui.activity.LivePlayActivity;
 import com.github.tvbox.osc.ui.adapter.LiveChannelGroupAdapter;
 import com.github.tvbox.osc.ui.adapter.LiveChannelItemAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
@@ -89,7 +91,7 @@ import xyz.doikki.videoplayer.player.VideoView;
  * 手机版直播控制页：上方为按原始比例展示的直播播放器，下方为直播控制按钮。
  * 点击上方播放器进入 LivePlayActivity 全屏直播。
  */
-public class LiveControlActivity extends BaseActivity {
+public class LiveFragment extends BaseLazyFragment {
 
     private interface OnOptionSelected {
         void onSelected(int position);
@@ -155,7 +157,7 @@ public class LiveControlActivity extends BaseActivity {
 
     @Override
     protected void init() {
-        setLoadSir(findViewById(R.id.live_control_root));
+        setLoadSir(findViewById(R.id.live_content_root));
         mVideoView = findViewById(R.id.mVideoView);
         pbLiveLoading = findViewById(R.id.pbLiveLoading);
         ivEpgChannelLogo = findViewById(R.id.ivEpgChannelLogo);
@@ -201,7 +203,7 @@ public class LiveControlActivity extends BaseActivity {
         findViewById(R.id.tvBackChip).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                if (mActivity != null) mActivity.onBackPressed();
             }
         });
         // 点击上方播放器区域进入全屏直播
@@ -260,8 +262,7 @@ public class LiveControlActivity extends BaseActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onFragmentResume() {
         if (mVideoView == null || currentChannelItem == null) return;
         Hawk.put(HawkConfig.PLAYER_IS_LIVE, true);
         String hawkChannelName = Hawk.get(HawkConfig.LIVE_CHANNEL, "");
@@ -284,17 +285,17 @@ public class LiveControlActivity extends BaseActivity {
     }
 
     private void scheduleDeferredChannelSync() {
-        View decorView = getWindow().getDecorView();
+        View decorView = mActivity.getWindow().getDecorView();
         decorView.removeCallbacks(mDeferredChannelSync);
         channelSyncRetryCount = 0;
         decorView.postDelayed(mDeferredChannelSync, CHANNEL_SYNC_DELAY);
     }
 
     private void performDeferredChannelSync() {
-        if (isFinishing() || isDestroyed()) return;
-        View decorView = getWindow().getDecorView();
+        if (isActivityUnavailable()) return;
+        View decorView = mActivity.getWindow().getDecorView();
         DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        mActivity.getWindowManager().getDefaultDisplay().getMetrics(dm);
         int decorWidth = decorView.getWidth();
         // 本页锁定竖屏：必须等到 Display 已经回到竖屏、且窗口宽度与 Display 宽度一致，
         // 否则 refreshAutoSize() 会把横屏宽度当作基准，导致随后新建的列表条目被放大。
@@ -306,7 +307,7 @@ public class LiveControlActivity extends BaseActivity {
             return;
         }
         channelSyncRetryCount = 0;
-        refreshAutoSize();
+        if (mActivity instanceof BaseActivity) ((BaseActivity) mActivity).refreshAutoSize();
         boolean channelChanged = syncChannelFromHawk();
         if (channelChanged) {
             // 换台后返回：丢弃旧 ViewHolder，按当前竖屏密度重新创建列表项
@@ -326,22 +327,28 @@ public class LiveControlActivity extends BaseActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onFragmentPause() {
         if (mVideoView != null && mVideoView.isPlaying()) {
             mVideoView.pause();
         }
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         Hawk.put(HawkConfig.PLAYER_IS_LIVE, false);
         mHandler.removeCallbacksAndMessages(null);
-        getWindow().getDecorView().removeCallbacks(mDeferredChannelSync);
+        if (mActivity != null) {
+            mActivity.getWindow().getDecorView().removeCallbacks(mDeferredChannelSync);
+        }
         if (mVideoView != null) {
             mVideoView.release();
         }
         super.onDestroy();
+    }
+
+    private boolean isActivityUnavailable() {
+        return mActivity == null || mActivity.isFinishing()
+                || (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1 && mActivity.isDestroyed());
     }
 
     private void openFullscreenLive() {
@@ -366,11 +373,11 @@ public class LiveControlActivity extends BaseActivity {
             ApiConfig.get().loadLiveConfig(true, new ApiConfig.LoadConfigCallback() {
                 @Override
                 public void success() {
-                    runOnUiThread(new Runnable() {
+                    mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             liveConfigLoading = false;
-                            if (isFinishing()) return;
+                            if (isActivityUnavailable()) return;
                             showSuccess();
                             setupChannelAndPlay();
                         }
@@ -379,24 +386,24 @@ public class LiveControlActivity extends BaseActivity {
 
                 @Override
                 public void error(String msg) {
-                    runOnUiThread(new Runnable() {
+                    mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             liveConfigLoading = false;
-                            if (isFinishing()) return;
+                            if (isActivityUnavailable()) return;
                             showEmpty();
-                            Toast.makeText(LiveControlActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mActivity, msg, Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
 
                 @Override
                 public void notice(String msg) {
-                    runOnUiThread(new Runnable() {
+                    mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (!isFinishing()) {
-                                Toast.makeText(LiveControlActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            if (!isActivityUnavailable()) {
+                                Toast.makeText(mActivity, msg, Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -510,13 +517,13 @@ public class LiveControlActivity extends BaseActivity {
 
                 @Override
                 public void onError(Response<String> response) {
-                    runOnUiThread(new Runnable() {
+                    mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             liveProxyLoading = false;
-                            if (!isFinishing()) {
+                            if (!isActivityUnavailable()) {
                                 showEmpty();
-                                Toast.makeText(LiveControlActivity.this, "直播列表加载失败", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(mActivity, "直播列表加载失败", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -527,11 +534,11 @@ public class LiveControlActivity extends BaseActivity {
 
     private void applyProxyLives(String content) {
         if (content == null || content.trim().isEmpty()) {
-            runOnUiThread(new Runnable() {
+            mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     liveProxyLoading = false;
-                    if (!isFinishing()) showEmpty();
+                    if (!isActivityUnavailable()) showEmpty();
                 }
             });
             return;
@@ -544,20 +551,20 @@ public class LiveControlActivity extends BaseActivity {
         }
         List<LiveChannelGroup> groups = ApiConfig.get().getChannelGroupList();
         if (groups == null || groups.isEmpty()) {
-            runOnUiThread(new Runnable() {
+            mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     liveProxyLoading = false;
-                    if (!isFinishing()) showEmpty();
+                    if (!isActivityUnavailable()) showEmpty();
                 }
             });
             return;
         }
-        runOnUiThread(new Runnable() {
+        mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 liveProxyLoading = false;
-                if (isFinishing()) return;
+                if (isActivityUnavailable()) return;
                 showSuccess();
                 initSettingSelections();
                 playLastOrDefaultChannel();
@@ -627,7 +634,7 @@ public class LiveControlActivity extends BaseActivity {
         ArrayList<String> urls = currentChannelItem.getChannelUrls();
         if (urls == null || urls.isEmpty()) {
             showPlayerLoading(false);
-            Toast.makeText(this, "当前频道暂无可用线路", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, "当前频道暂无可用线路", Toast.LENGTH_SHORT).show();
             return;
         }
         if (currentChannelItem.getSourceIndex() < 0 || currentChannelItem.getSourceIndex() >= urls.size()) {
@@ -643,7 +650,7 @@ public class LiveControlActivity extends BaseActivity {
 
     private void initChannelListViews() {
         mGroupListView.setHasFixedSize(true);
-        mGroupListView.setLayoutManager(new V7LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        mGroupListView.setLayoutManager(new V7LinearLayoutManager(mActivity, RecyclerView.VERTICAL, false));
         liveChannelGroupAdapter = new LiveChannelGroupAdapter();
         mGroupListView.setAdapter(liveChannelGroupAdapter);
         liveChannelGroupAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
@@ -654,7 +661,7 @@ public class LiveControlActivity extends BaseActivity {
         });
 
         mChannelListView.setHasFixedSize(true);
-        mChannelListView.setLayoutManager(new V7LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        mChannelListView.setLayoutManager(new V7LinearLayoutManager(mActivity, RecyclerView.VERTICAL, false));
         liveChannelItemAdapter = new LiveChannelItemAdapter();
         mChannelListView.setAdapter(liveChannelItemAdapter);
         liveChannelItemAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
@@ -702,7 +709,7 @@ public class LiveControlActivity extends BaseActivity {
 
     private void normalizeChannelItem(View itemView) {
         if (itemView == null) return;
-        int baseWidth = getWindow().getDecorView().getWidth();
+        int baseWidth = mActivity.getWindow().getDecorView().getWidth();
         if (baseWidth <= 0) return;
         float unit = (float) baseWidth / CHANNEL_LIST_DESIGN_WIDTH;
         if (itemView.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
@@ -743,12 +750,12 @@ public class LiveControlActivity extends BaseActivity {
         if (groups == null || position < 0 || position >= groups.size()) return;
         LiveChannelGroup group = groups.get(position);
         if (!TextUtils.isEmpty(group.getGroupPassword())) {
-            Toast.makeText(this, "该分组需要密码，请在直播全屏页切换", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, "该分组需要密码，请在直播全屏页切换", Toast.LENGTH_SHORT).show();
             return;
         }
         ArrayList<LiveChannelItem> channels = group.getLiveChannels();
         if (channels == null || channels.isEmpty()) {
-            Toast.makeText(this, "该分组暂无频道", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, "该分组暂无频道", Toast.LENGTH_SHORT).show();
             return;
         }
         selectedGroupIndex = group.getGroupIndex();
@@ -930,7 +937,7 @@ public class LiveControlActivity extends BaseActivity {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (isFinishing() || currentChannelItem == null) return;
+                        if (isActivityUnavailable() || currentChannelItem == null) return;
                         if (!channelName.equals(currentChannelItem.getChannelName())) return;
                         showEpgPrograms(channelName, list);
                     }
@@ -1363,13 +1370,13 @@ public class LiveControlActivity extends BaseActivity {
 
     private void showSelectDialog(String title, ArrayList<String> items, int select, final OnOptionSelected callback) {
         if (items == null || items.isEmpty()) {
-            Toast.makeText(this, "暂无可选项", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, "暂无可选项", Toast.LENGTH_SHORT).show();
             return;
         }
         if (select < 0 || select >= items.size()) {
             select = 0;
         }
-        final SelectDialog<String> dialog = new SelectDialog<>(this);
+        final SelectDialog<String> dialog = new SelectDialog<>(mActivity);
         dialog.setTip(title);
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<String>() {
             @Override
@@ -1415,14 +1422,14 @@ public class LiveControlActivity extends BaseActivity {
 
     private void showSourceDialog() {
         if (currentChannelItem == null) {
-            Toast.makeText(this, "频道加载中，请稍候", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, "频道加载中，请稍候", Toast.LENGTH_SHORT).show();
             return;
         }
         ArrayList<String> names = currentChannelItem.getChannelSourceNames();
         ArrayList<String> urls = currentChannelItem.getChannelUrls();
         int count = urls != null ? urls.size() : (names == null ? 0 : names.size());
         if (count <= 0) {
-            Toast.makeText(this, "当前频道暂无线路", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, "当前频道暂无线路", Toast.LENGTH_SHORT).show();
             return;
         }
         ArrayList<String> items = new ArrayList<>();
@@ -1549,10 +1556,10 @@ public class LiveControlActivity extends BaseActivity {
         ApiConfig.get().loadLiveConfig(false, new ApiConfig.LoadConfigCallback() {
             @Override
             public void success() {
-                runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (isFinishing()) return;
+                        if (isActivityUnavailable()) return;
                         showSuccess();
                         restoreChannelAndPlay(channelName, sourceIndex);
                     }
@@ -1561,23 +1568,23 @@ public class LiveControlActivity extends BaseActivity {
 
             @Override
             public void error(String msg) {
-                runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (isFinishing()) return;
+                        if (isActivityUnavailable()) return;
                         showSuccess();
-                        Toast.makeText(LiveControlActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mActivity, msg, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
 
             @Override
             public void notice(String msg) {
-                runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (!isFinishing()) {
-                            Toast.makeText(LiveControlActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        if (!isActivityUnavailable()) {
+                            Toast.makeText(mActivity, msg, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

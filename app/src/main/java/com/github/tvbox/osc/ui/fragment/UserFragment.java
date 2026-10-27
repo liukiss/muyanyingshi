@@ -22,7 +22,7 @@ import com.github.tvbox.osc.cache.RoomDataManger;
 import com.github.tvbox.osc.event.ServerEvent;
 import com.github.tvbox.osc.ui.activity.DetailActivity;
 import com.github.tvbox.osc.ui.activity.FastSearchActivity;
-import com.github.tvbox.osc.ui.activity.SearchActivity;
+import com.github.tvbox.osc.ui.activity.MainActivity;
 import com.github.tvbox.osc.ui.adapter.HomeHotVodAdapter;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.ImgUtil;
@@ -128,15 +128,16 @@ public class UserFragment extends BaseLazyFragment {
     }
 
     private void jumpSearch(Movie.Video vod) {
-        Intent newIntent;
         if (Hawk.get(HawkConfig.FAST_SEARCH_MODE, true)) {
-            newIntent = new Intent(mContext, FastSearchActivity.class);
+            Intent newIntent = new Intent(mContext, FastSearchActivity.class);
+            newIntent.putExtra("title", vod.name);
+            newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            mActivity.startActivity(newIntent);
         } else {
-            newIntent = new Intent(mContext, SearchActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putString("title", vod.name);
+            MainActivity.openTab(mContext, MainActivity.TAB_SEARCH, bundle);
         }
-        newIntent.putExtra("title", vod.name);
-        newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        mActivity.startActivity(newIntent);
     }
 
     private ImgUtil.Style style;

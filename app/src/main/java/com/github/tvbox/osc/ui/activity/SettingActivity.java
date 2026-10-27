@@ -184,13 +184,13 @@ public class SettingActivity extends BaseActivity {
     public void onBackPressed() {
         if (currentApi.equals(Hawk.get(HawkConfig.API_URL, "https://tv.ysccn.top/xljk_nopermission.json"))) {
             if (homeRec != Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC)) {
-                jumpActivity(HomeActivity.class, createBundle());
+                jumpActivity(MainActivity.class, createBundle());
             }else if(!currentLiveApi.equals(Hawk.get(HawkConfig.LIVE_API_URL, ""))){
-                jumpActivity(HomeActivity.class, createBundle());
+                jumpActivity(MainActivity.class, createBundle());
             }
         } else {
-            AppManager.getInstance().finishActivity(HomeActivity.class);
-            jumpActivity(HomeActivity.class);
+            AppManager.getInstance().finishActivity(MainActivity.class);
+            jumpActivity(MainActivity.class);
             finish();
             return;
         }
