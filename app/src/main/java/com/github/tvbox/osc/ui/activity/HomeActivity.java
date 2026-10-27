@@ -200,6 +200,14 @@ public class HomeActivity extends BaseActivity {
                 showSiteSwitch();
             }
         });
+        // 手机版：设置入口移到顶栏最右，只保留图标
+        findViewById(R.id.tvSettingHome).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                jumpActivity(SettingActivity.class);
+            }
+        });
         // 手机版：收藏入口移到顶栏图标，位于“推送”左侧
         findViewById(R.id.tvCollectHome).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -468,7 +476,7 @@ public class HomeActivity extends BaseActivity {
 
     private boolean skipNextUpdate = false;
 
-    /** 手机版：底部常驻的直播 / 历史 / 搜索 / 设置入口（不随 ViewPager 滑动） */
+    /** 手机版：底部常驻的主页 / 直播 / 历史 / 搜索入口（不随 ViewPager 滑动） */
     private void bindBottomBar() {
         View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {
             @Override
@@ -484,22 +492,32 @@ public class HomeActivity extends BaseActivity {
                 HawkConfig.hotVodDelete = false;
                 FastClickCheckUtil.check(v);
                 int id = v.getId();
-                if (id == R.id.tvLive) {
+                if (id == R.id.tvHome) {
+                    backToHome();
+                } else if (id == R.id.tvLive) {
                     jumpActivity(LiveControlActivity.class);
                 } else if (id == R.id.tvSearch) {
                     jumpActivity(SearchActivity.class);
-                } else if (id == R.id.tvSetting) {
-                    jumpActivity(SettingActivity.class);
                 } else if (id == R.id.tvHistory) {
                     jumpActivity(HistoryActivity.class);
                 }
             }
         };
-        int[] ids = {R.id.tvLive, R.id.tvHistory, R.id.tvSearch, R.id.tvSetting};
+        int[] ids = {R.id.tvHome, R.id.tvLive, R.id.tvHistory, R.id.tvSearch};
         for (int id : ids) {
             View button = findViewById(id);
             button.setOnClickListener(clickListener);
             button.setOnFocusChangeListener(focusChangeListener);
+        }
+    }
+
+    /** 手机版：底部“主页”返回主界面（切到首个分类页并回到海报区顶部） */
+    private void backToHome() {
+        if (mViewPager.getCurrentItem() != 0) {
+            mViewPager.setCurrentItem(0, true);
+        }
+        if (!fragments.isEmpty() && fragments.get(0) instanceof GridFragment) {
+            ((GridFragment) fragments.get(0)).scrollTop();
         }
     }
 
