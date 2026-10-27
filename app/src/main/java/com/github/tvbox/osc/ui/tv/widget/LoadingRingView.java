@@ -23,9 +23,9 @@ public class LoadingRingView extends FrameLayout {
     private static final int RING_DELAY = 650;
     private static final int SPIN_DURATION = 1000;
     private static final float ICON_RATIO = 0.72f;
-    private static final float RING_START_SCALE = 0.70f;
-    private static final float RING_END_SCALE = 1.40f;
-    private static final float RING_START_ALPHA = 0.45f;
+    private static final float RING_START_SCALE = 0.92f;
+    private static final float RING_END_SCALE = 1.38f;
+    private static final float RING_START_ALPHA = 0.50f;
 
     private final View ringOuter;
     private final View ringInner;
@@ -56,8 +56,8 @@ public class LoadingRingView extends FrameLayout {
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setImageResource(R.drawable.icon_loading);
 
-        addView(ringOuter, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
-        addView(ringInner, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
+        addView(ringOuter, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        addView(ringInner, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         addView(icon, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER));
 
         setClipChildren(false);
@@ -75,10 +75,10 @@ public class LoadingRingView extends FrameLayout {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int diameter = resolveDiameter(widthMeasureSpec, heightMeasureSpec);
         int iconSize = Math.round(diameter * ICON_RATIO);
-        int ringSpec = MeasureSpec.makeMeasureSpec(diameter, MeasureSpec.EXACTLY);
         int iconSpec = MeasureSpec.makeMeasureSpec(iconSize, MeasureSpec.EXACTLY);
-        ringOuter.measure(ringSpec, ringSpec);
-        ringInner.measure(ringSpec, ringSpec);
+        // 脉冲环以图标外沿为起点向外扩散，最大不超过视图边界，避免被方形区域裁切
+        ringOuter.measure(iconSpec, iconSpec);
+        ringInner.measure(iconSpec, iconSpec);
         icon.measure(iconSpec, iconSpec);
         setMeasuredDimension(diameter, diameter);
     }
