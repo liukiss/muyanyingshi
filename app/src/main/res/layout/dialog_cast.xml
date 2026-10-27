@@ -52,12 +52,11 @@
             app:tv_selectedItemIsCentered="true"
             app:tv_verticalSpacingWithMargins="@dimen/vs_6" />
 
-        <ProgressBar
+        <com.github.tvbox.osc.ui.tv.widget.LoadingRingView
             android:id="@+id/progressBar"
             android:layout_width="@dimen/vs_32"
             android:layout_height="@dimen/vs_32"
-            android:layout_gravity="center"
-            android:indeterminateDrawable="@drawable/anim_loading" />
+            android:layout_gravity="center" />
 
         <TextView
             android:id="@+id/tvScanning"

@@ -10,7 +10,6 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -97,7 +96,7 @@ public class LiveControlActivity extends BaseActivity {
     }
 
     private VideoView<xyz.doikki.videoplayer.player.AbstractPlayer> mVideoView;
-    private ProgressBar pbLiveLoading;
+    private View pbLiveLoading;
     private ImageView ivEpgChannelLogo;
     private TextView tvEpgChannelFallback;
     private TextView tvEpgChannelName;

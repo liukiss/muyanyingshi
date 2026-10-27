@@ -30,7 +30,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -144,7 +143,7 @@ public class PlayFragment extends BaseLazyFragment {
     private MyVideoView mVideoView;
     private TextView mPlayLoadTip;
     private ImageView mPlayLoadErr;
-    private ProgressBar mPlayLoading;
+    private View mPlayLoading;
     private VodController mController;
     private SourceViewModel sourceViewModel;
     private Observer<JSONObject> playResultObserver;

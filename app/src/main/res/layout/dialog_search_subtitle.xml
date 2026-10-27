@@ -90,14 +90,11 @@
         </ScrollView>
 
 
-        <ProgressBar
+        <com.github.tvbox.osc.ui.tv.widget.LoadingRingView
             android:id="@+id/loadingBar"
             android:layout_width="@dimen/vs_36"
             android:layout_height="@dimen/vs_36"
             android:layout_gravity="center"
-            android:indeterminateBehavior="repeat"
-            android:indeterminateDrawable="@drawable/anim_loading"
-            android:indeterminateOnly="true"
             android:visibility="gone" />
 
     </LinearLayout>

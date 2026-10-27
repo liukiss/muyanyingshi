@@ -5,7 +5,6 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +28,7 @@ public class SearchDanmuDialog extends BaseDialog {
     private TvRecyclerView gridView;
     private SearchDanmuAdapter searchAdapter;
     private EditText searchInput;
-    private ProgressBar loadingBar;
+    private View loadingBar;
     private DanmuLoader danmuLoader;
     private String episode = "";
 

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +38,7 @@ public class SearchSubtitleDialog extends BaseDialog {
     private TextView subtitleSearchBtn;
     private EditText subtitleSearchEt;
     private SubtitleLoader mSubtitleLoader;
-    private ProgressBar loadingBar;
+    private View loadingBar;
     private SubtitleViewModel subtitleViewModel;
     private int page = 1;
     private int maxPage = 5;

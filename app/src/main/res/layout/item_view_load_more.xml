@@ -12,12 +12,10 @@
         android:gravity="center"
         android:orientation="horizontal">
 
-        <ProgressBar
+        <com.github.tvbox.osc.ui.tv.widget.LoadingRingView
             android:id="@+id/loading_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:indeterminateTint="@android:color/white"
-            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="@dimen/vs_32"
+            android:layout_height="@dimen/vs_32"
             android:layout_marginRight="@dimen/vs_4"/>
 
         <TextView
