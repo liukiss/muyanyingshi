@@ -108,6 +108,31 @@
                 android:src="@drawable/icon_delete" />
         </FrameLayout>
 
+        <!-- 手机版：多选态选中描边（透明填充，只显示边框） -->
+        <View
+            android:id="@+id/selectBorder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/shape_history_select_border"
+            android:clickable="false"
+            android:focusable="false"
+            android:visibility="gone" />
+
+        <!-- 手机版：多选态角标（选中=实心勾，待选=空心框） -->
+        <ImageView
+            android:id="@+id/ivSelectBadge"
+            android:layout_width="@dimen/vs_20"
+            android:layout_height="@dimen/vs_20"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="@dimen/vs_5"
+            android:layout_marginEnd="@dimen/vs_5"
+            android:layout_marginRight="@dimen/vs_5"
+            android:clickable="false"
+            android:focusable="false"
+            android:scaleType="centerInside"
+            android:src="@drawable/icon_source_unchecked"
+            android:visibility="gone" />
+
     </com.github.tvbox.osc.ui.widget.RatioFrameLayout>
 
     <!-- 影片名称：卡片下方，小字号，按实际行数自适应高度（行内图片顶部对齐） -->
