@@ -66,6 +66,7 @@ import java.util.List;
 
 import okhttp3.HttpUrl;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+import xyz.doikki.videoplayer.player.VideoView;
 
 /**
  * @author pj567
@@ -97,6 +98,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
     private TextView tvAutoSwitchLineText;
     private TextView tvRecStyleText;
     private TextView tvIjkCachePlay;
+    private TextView tvKeepScreenOn;
     private TextView tvHomeDefaultShow;
     private ApiDialog apiDialog;
     private boolean selectLocalLive;
@@ -166,6 +168,8 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvPlay.setText(PlayerHelper.getPlayerName(Hawk.get(HawkConfig.PLAY_TYPE, 2)));
         tvRender.setText(PlayerHelper.getRenderName(Hawk.get(HawkConfig.PLAY_RENDER, 0)));
         tvIjkCachePlay.setText(Hawk.get(HawkConfig.IJK_CACHE_PLAY, false) ? "开启" : "关闭");
+        tvKeepScreenOn = findViewById(R.id.tvKeepScreenOn);
+        tvKeepScreenOn.setText(Hawk.get(HawkConfig.KEEP_SCREEN_ON, true) ? "开启" : "关闭");
         tvHomeDefaultShow = findViewById(R.id.tvHomeText);
         tvHomeDefaultShow.setText(Hawk.get(HawkConfig.DEFAULT_LOAD_LIVE, false) ? "直播" : "点播");
         findViewById(R.id.llDebug).setOnClickListener(new View.OnClickListener() {
@@ -809,6 +813,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
         });
 
         findViewById(R.id.llIjkCachePlay).setOnClickListener((view -> onClickIjkCachePlay(view)));
+        findViewById(R.id.llKeepScreenOn).setOnClickListener((view -> onClickKeepScreenOn(view)));
         findViewById(R.id.llClearCache).setOnClickListener((view -> onClickClearCache(view)));
     }
 
@@ -910,6 +915,14 @@ public class ModelSettingFragment extends BaseLazyFragment {
         FastClickCheckUtil.check(v);
         Hawk.put(HawkConfig.IJK_CACHE_PLAY, !Hawk.get(HawkConfig.IJK_CACHE_PLAY, false));
         tvIjkCachePlay.setText(Hawk.get(HawkConfig.IJK_CACHE_PLAY, false) ? "开启" : "关闭");
+    }
+
+    private void onClickKeepScreenOn(View v) {
+        FastClickCheckUtil.check(v);
+        boolean enable = !Hawk.get(HawkConfig.KEEP_SCREEN_ON, true);
+        Hawk.put(HawkConfig.KEEP_SCREEN_ON, enable);
+        tvKeepScreenOn.setText(enable ? "开启" : "关闭");
+        VideoView.sKeepScreenOnEnabled = enable;
     }
 
     private void openLocalConfig(boolean live) {

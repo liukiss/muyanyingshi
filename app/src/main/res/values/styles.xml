@@ -14,7 +14,7 @@
         <item name="android:windowFullscreen">false</item>//手机版：默认保留状态栏，全屏页面运行时再隐藏
         <item name="android:windowContentOverlay">@null</item>//是否有遮盖
         <item name="windowNoTitle">true</item>
-        <item name="android:keepScreenOn">true</item>
+        <!-- 手机版：不全局强制亮屏，遵循系统息屏/自动锁屏设置；播放时常亮由播放器按设置动态控制 -->
         <!--        <item name="android:windowBackground">@drawable/main_bg</item>-->
         <item name="android:windowBackground">@android:color/transparent</item>
         <!-- 手机版：状态栏透明，让窗口背景（壁纸/app_bg）透出，与页面背景保持一致 -->

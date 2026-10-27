@@ -332,6 +332,23 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/llKeepScreenOn"
+                style="@style/setting_row">
+
+                <TextView
+                    style="@style/setting_row_label"
+                    android:text="播放时保持亮屏" />
+
+                <TextView
+                    android:id="@+id/tvKeepScreenOn"
+                    style="@style/setting_row_value" />
+
+                <TextView
+                    style="@style/setting_row_arrow"
+                    android:text=">" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/m3u8Ad"
                 style="@style/setting_row">
 
