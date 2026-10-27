@@ -140,7 +140,7 @@ public class HomeFragment extends BaseLazyFragment {
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) topLayout.getLayoutParams();
             // 手机版：状态栏下方不再预留大块空白，文案贴顶
             params.topMargin = AutoSizeUtils.mm2px(mActivity, 0f);
-            params.height = AutoSizeUtils.mm2px(mActivity, 45.0f);
+            params.height = AutoSizeUtils.mm2px(mActivity, 36.0f);
             topLayout.setLayoutParams(params);
             topLayout.setAlpha(1.0f);
             refreshTopInfoTextSize();
@@ -240,7 +240,7 @@ public class HomeFragment extends BaseLazyFragment {
         this.sortAdapter = new SortAdapter();
         this.mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
         // 手机版：分类行贴左显示并压缩列间距
-        this.mGridView.setSpacingWithMargins(AutoSizeUtils.mm2px(this.mContext, 4.0f), AutoSizeUtils.dp2px(this.mContext, 8.0f));
+        this.mGridView.setSpacingWithMargins(AutoSizeUtils.mm2px(this.mContext, 2.0f), AutoSizeUtils.dp2px(this.mContext, 4.0f));
         this.mGridView.setAdapter(this.sortAdapter);
         sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -263,7 +263,7 @@ public class HomeFragment extends BaseLazyFragment {
                             TextView textView = view.findViewById(R.id.tvTitle);
                             textView.getPaint().setFakeBoldText(false);
                             if (sortFocused == p) {
-                                view.animate().scaleX(1.1f).scaleY(1.1f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
+                                view.animate().scaleX(1.05f).scaleY(1.05f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
                                 textView.setTextColor(getResources().getColor(R.color.color_FFFFFF));
                             } else {
                                 view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).start();
@@ -284,7 +284,7 @@ public class HomeFragment extends BaseLazyFragment {
                     currentView = view;
                     isDownOrUp = false;
                     sortChange = true;
-                    view.animate().scaleX(1.1f).scaleY(1.1f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
+                    view.animate().scaleX(1.05f).scaleY(1.05f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
                     TextView textView = view.findViewById(R.id.tvTitle);
                     textView.getPaint().setFakeBoldText(true);
                     textView.setTextColor(getResources().getColor(R.color.color_FFFFFF));
@@ -551,7 +551,7 @@ public class HomeFragment extends BaseLazyFragment {
         }
         currentView = view;
         sortFocusView = view;
-        view.animate().scaleX(1.1f).scaleY(1.1f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
+        view.animate().scaleX(1.05f).scaleY(1.05f).setInterpolator(new BounceInterpolator()).setDuration(300).start();
         TextView textView = view.findViewById(R.id.tvTitle);
         if (textView != null) {
             textView.getPaint().setFakeBoldText(true);
@@ -923,7 +923,7 @@ public class HomeFragment extends BaseLazyFragment {
         if (tvName == null || tvDate == null) {
             return;
         }
-        tvName.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.ts_30));
+        tvName.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.ts_22));
         tvDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.ts_26));
     }
 

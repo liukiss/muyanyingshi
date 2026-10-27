@@ -493,8 +493,9 @@ public class SearchFragment extends BaseLazyFragment {
     private void renderWordChips(final GridLayout grid, final List<String> words, final OnWordClickListener listener) {
         if (grid == null) return;
         final float textSize = getResources().getDimension(R.dimen.ts_18);
-        final int itemHeight = getResources().getDimensionPixelSize(R.dimen.vs_36);
-        final int itemMargin = getResources().getDimensionPixelSize(R.dimen.vs_4);
+        // 手机版：压缩热词/历史词标签高度与行间距，让搜索页更紧凑
+        final int itemHeight = getResources().getDimensionPixelSize(R.dimen.vs_30);
+        final int itemMargin = getResources().getDimensionPixelSize(R.dimen.vs_2);
         final int paddingH = getResources().getDimensionPixelSize(R.dimen.vs_12);
         final int minWidth = getResources().getDimensionPixelSize(R.dimen.vs_60);
         final int textColor = getResources().getColor(R.color.color_FFFFFF);

@@ -16,5 +16,5 @@
         android:id="@+id/mainBottomBar"
         layout="@layout/view_bottom_nav"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/vs_60" />
+        android:layout_height="@dimen/vs_50" />
 </LinearLayout>
