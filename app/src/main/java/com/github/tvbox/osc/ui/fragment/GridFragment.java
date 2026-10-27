@@ -646,22 +646,23 @@ public class GridFragment extends BaseLazyFragment {
 
     private ValueAnimator createPulseAnimator(final View view, long delay) {
         if (view == null) return null;
-        view.setScaleX(0.7f);
-        view.setScaleY(0.7f);
-        view.setAlpha(0.45f);
+        view.setScaleX(0.66f);
+        view.setScaleY(0.66f);
+        view.setAlpha(0.5f);
         ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
         animator.setDuration(1300);
         animator.setStartDelay(delay);
         animator.setRepeatCount(ValueAnimator.INFINITE);
-        animator.setInterpolator(new LinearInterpolator());
+        animator.setInterpolator(new DecelerateInterpolator());
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float fraction = (float) animation.getAnimatedValue();
-                float scale = 0.7f + 0.7f * fraction;
+                // 环最大只到视图边界内，避免被 refreshAnimLayout 的方形区域裁切
+                float scale = 0.66f + 0.334f * fraction;
                 view.setScaleX(scale);
                 view.setScaleY(scale);
-                view.setAlpha(0.45f * (1f - fraction));
+                view.setAlpha(0.5f * (1f - fraction));
             }
         });
         return animator;
@@ -687,8 +688,8 @@ public class GridFragment extends BaseLazyFragment {
 
     private void resetPulseView(View view) {
         if (view == null) return;
-        view.setScaleX(0.7f);
-        view.setScaleY(0.7f);
+        view.setScaleX(0.66f);
+        view.setScaleY(0.66f);
         view.setAlpha(0f);
     }
 
