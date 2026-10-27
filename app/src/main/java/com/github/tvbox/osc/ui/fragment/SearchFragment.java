@@ -169,13 +169,7 @@ public class SearchFragment extends BaseLazyFragment {
                 if (isActivityUnavailable()) return;
                 focusView.requestFocus();
                 focusView.requestFocusFromTouch();
-                // 手机版适配：进入页面主动弹出系统输入法（manifest 为 stateHidden）
-                if (focusView == etSearch) {
-                    InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
-                    if (imm != null) {
-                        imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
-                    }
-                }
+                // 手机版：进入搜索页只聚焦输入框，不主动弹出系统输入法，由用户点击输入框时再弹出
             }
         });
     }
@@ -369,6 +363,8 @@ public class SearchFragment extends BaseLazyFragment {
                         dialog.dismiss();
                     }
                 });
+                // 手机版：底部面板弹出前收起输入法，避免键盘挡住面板
+                hiddenImm();
                 mSearchCheckboxDialog.show();
             }
         });

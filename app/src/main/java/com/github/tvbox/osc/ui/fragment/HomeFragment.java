@@ -21,7 +21,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DiffUtil;
@@ -1020,16 +1019,13 @@ public class HomeFragment extends BaseLazyFragment {
         int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
         if (select < 0 || select >= sites.size()) select = 0;
         if (mSiteSwitchDialog == null) {
-            mSiteSwitchDialog = new SelectDialog<>(mActivity);
+            // 手机版：换源改为贴底全宽面板，从屏幕下缘向上弹出
+            mSiteSwitchDialog = new SelectDialog<>(mActivity, true);
             TvRecyclerView tvRecyclerView = mSiteSwitchDialog.findViewById(R.id.list);
             // 根据 sites 数量动态计算列数
             int spanCount = (int) Math.floor(sites.size() / 20.0);
             spanCount = Math.min(spanCount, 2);
             tvRecyclerView.setLayoutManager(new V7GridLayoutManager(mSiteSwitchDialog.getContext(), spanCount + 1));
-            // 设置对话框宽度
-            ConstraintLayout cl_root = mSiteSwitchDialog.findViewById(R.id.cl_root);
-            ViewGroup.LayoutParams clp = cl_root.getLayoutParams();
-            clp.width = AutoSizeUtils.mm2px(mSiteSwitchDialog.getContext(), 320); // 手机版适配：360 基准下固定 320 宽，不溢出屏幕
             mSiteSwitchDialog.setTip("请选择首页数据源");
         }
         mSiteSwitchDialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<SourceBean>() {

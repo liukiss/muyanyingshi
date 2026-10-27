@@ -115,20 +115,11 @@ public class SearchCheckboxDialog extends BaseDialog{
 
     @Override
     public void show() {
+        prepareBottomSheet();
         super.show();
         if (!isShowing()) return;
-        android.view.Window window = getWindow();
-        if (window != null) {
-            // 手机版：不再铺满全屏，按内容高度估算并限制在屏幕 62% 以内，列表在弹窗内滚动
-            android.util.DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-            int width = (int) (dm.widthPixels * 0.9f);
-            int maxHeight = (int) (dm.heightPixels * 0.62f);
-            int span = mSourceList.size() <= 3 ? 1 : 2;
-            int rows = (mSourceList.size() + span - 1) / span;
-            int contentHeight = me.jessyan.autosize.utils.AutoSizeUtils.mm2px(getContext(), 56f)
-                    + rows * me.jessyan.autosize.utils.AutoSizeUtils.mm2px(getContext(), 32f);
-            window.setLayout(width, Math.min(contentHeight, maxHeight));
-        }
+        // 手机版：与换源面板一致，贴底全宽、加大高度，标题行可向下拖动关闭
+        applyBottomSheet(findViewById(R.id.sheetTitleBar));
     }
 
     public void setMSourceList(List<SourceBean> SourceBeanList) {

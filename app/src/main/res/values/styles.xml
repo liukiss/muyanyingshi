@@ -49,6 +49,12 @@
         <item name="android:windowExitAnimation">@anim/popup_drop_down_out</item>
     </style>
 
+    <!-- 手机版：底部面板从屏幕下缘向上弹出/向下退出 -->
+    <style name="BottomSheetDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_bottom</item>
+    </style>
+
     <style name="epg_window_btn">
         <item name="android:gravity">center</item>
         <item name="android:background">@drawable/item_bg_selector_right</item>
