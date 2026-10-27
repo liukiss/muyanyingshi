@@ -328,9 +328,22 @@ public class LiveFragment extends BaseLazyFragment {
 
     @Override
     protected void onFragmentPause() {
-        if (mVideoView != null && mVideoView.isPlaying()) {
+        if (mVideoView == null) return;
+        int playState = mVideoView.getCurrentPlayState();
+        if (playState == VideoView.STATE_PLAYING) {
             mVideoView.pause();
+        } else if (playState == VideoView.STATE_PREPARING
+                || playState == VideoView.STATE_PREPARED
+                || playState == VideoView.STATE_BUFFERING) {
+            // 尚未真正进入播放态时 pause() 可能不生效，直接释放，
+            // 防止离开页面后预准备完成、在后台继续出声
+            mVideoView.release();
         }
+    }
+
+    /** 当前页面是否可见：异步加载回调据此决定是否起播 */
+    private boolean isPageVisible() {
+        return currentVisibleState && !isHidden() && getUserVisibleHint();
     }
 
     @Override
@@ -640,7 +653,11 @@ public class LiveFragment extends BaseLazyFragment {
         if (currentChannelItem.getSourceIndex() < 0 || currentChannelItem.getSourceIndex() >= urls.size()) {
             currentChannelItem.setSourceIndex(0);
         }
+        // 记录当前频道，保证隐藏期间选定的频道在回到页面时不会被当成“全屏切换”而回退
         Hawk.put(HawkConfig.LIVE_CHANNEL, currentChannelItem.getChannelName());
+        // 异步加载完成时页面可能已被切走：此时只选定频道，不起播；
+        // 下次可见时由 onFragmentResume 负责起播
+        if (!isPageVisible()) return;
         Hawk.put(HawkConfig.PLAYER_IS_LIVE, true);
         mVideoView.release();
         mVideoView.setUrl(currentChannelItem.getUrl(), liveChannelHeader());
