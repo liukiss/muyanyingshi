@@ -387,10 +387,10 @@ public class HomeFragment extends BaseLazyFragment {
             categoryPopup.dismiss();
             return;
         }
-        View content = LayoutInflater.from(this).inflate(R.layout.popup_home_categories, null);
+        View content = LayoutInflater.from(mContext).inflate(R.layout.popup_home_categories, null);
         rvCategories = content.findViewById(R.id.rvCategories);
-        rvCategories.setLayoutManager(new V7GridLayoutManager(this, 3));
-        rvCategories.setSpacingWithMargins(AutoSizeUtils.mm2px(this, 2.0f), AutoSizeUtils.dp2px(this, 4.0f));
+        rvCategories.setLayoutManager(new V7GridLayoutManager(mContext, 3));
+        rvCategories.setSpacingWithMargins(AutoSizeUtils.mm2px(mContext, 2.0f), AutoSizeUtils.dp2px(mContext, 4.0f));
         categoryAdapter = new CategoryGridAdapter();
         categoryAdapter.setSelectedPos(currentSelected);
         rvCategories.setAdapter(categoryAdapter);
@@ -401,7 +401,7 @@ public class HomeFragment extends BaseLazyFragment {
         int count = categoryAdapter.getData().size();
         int rows = (count + columns - 1) / columns;
         int maxHeight = (int) (getResources().getDisplayMetrics().heightPixels * 0.55f);
-        int height = Math.min(rows * AutoSizeUtils.mm2px(this, 26.0f) + AutoSizeUtils.mm2px(this, 8.0f), maxHeight);
+        int height = Math.min(rows * AutoSizeUtils.mm2px(mContext, 26.0f) + AutoSizeUtils.mm2px(mContext, 8.0f), maxHeight);
         ViewGroup.LayoutParams lp = rvCategories.getLayoutParams();
         lp.height = height;
         rvCategories.setLayoutParams(lp);
@@ -756,7 +756,7 @@ public class HomeFragment extends BaseLazyFragment {
                     }
                 });
             }
-        }, this);
+        }, mActivity);
     }
 
     private void warmSearchSpidersOnce() {

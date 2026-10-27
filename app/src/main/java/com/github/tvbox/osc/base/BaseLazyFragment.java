@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.PermissionChecker;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -291,6 +292,16 @@ public abstract class BaseLazyFragment extends Fragment implements CustomAdapt {
     public void jumpActivity(Class<? extends BaseActivity> clazz) {
         Intent intent = new Intent(mContext, clazz);
         startActivity(intent);
+    }
+
+    public boolean hasPermission(String permission) {
+        boolean has = true;
+        try {
+            has = PermissionChecker.checkSelfPermission(mContext, permission) == PermissionChecker.PERMISSION_GRANTED;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return has;
     }
 
     public void jumpActivity(Class<? extends BaseActivity> clazz, Bundle bundle) {
