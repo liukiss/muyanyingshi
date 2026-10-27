@@ -85,7 +85,8 @@ public class BaseDialog extends Dialog {
         Window window = getWindow();
         if (window == null) return;
         DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-        int sheetHeight = (int) (dm.heightPixels * 0.78f);
+        // 手机版：面板高度不超过屏幕一半
+        int sheetHeight = (int) (dm.heightPixels * 0.5f);
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, sheetHeight);
         View decor = window.getDecorView();
         decor.setTranslationY(0f);

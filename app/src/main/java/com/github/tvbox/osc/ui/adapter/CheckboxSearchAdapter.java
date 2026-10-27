@@ -2,6 +2,8 @@ package com.github.tvbox.osc.ui.adapter;
 
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,7 @@ import android.widget.CompoundButton;
 
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import me.jessyan.autosize.utils.AutoSizeUtils;
+
 public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearchAdapter.ViewHolder> {
 
     public CheckboxSearchAdapter(DiffUtil.ItemCallback<SourceBean> diffCallback) {
@@ -33,7 +38,17 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
 
     @Override
     public ViewHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dialog_checkbox_search, parent, false));
+        ViewHolder holder = new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dialog_checkbox_search, parent, false));
+        // 手机版：系统默认复选框图标按 dp 绘制，在 mm 设计尺寸下偏大，改为按设计尺寸缩放到与文字等高
+        Context context = parent.getContext();
+        Drawable icon = ContextCompat.getDrawable(context, R.drawable.selector_source_check);
+        if (icon != null) {
+            int size = AutoSizeUtils.mm2px(context, 15f);
+            icon.setBounds(0, 0, size, size);
+            holder.oneSearchSource.setCompoundDrawables(icon, null, null, null);
+            holder.oneSearchSource.setCompoundDrawablePadding(AutoSizeUtils.mm2px(context, 5f));
+        }
+        return holder;
     }
 
     private void setCheckedSource(HashMap<String, String> checkedSources) {
@@ -69,6 +84,11 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
         holder.oneSearchSource.setOnCheckedChangeListener(null);
         if (mCheckedSources != null) {
             holder.oneSearchSource.setChecked(mCheckedSources.containsKey(sourceBean.getKey()));
+        }
+        // 手机版：复合图标按选中状态刷新（避免低版本系统不自动同步 drawable 状态）
+        Drawable[] icons = holder.oneSearchSource.getCompoundDrawables();
+        if (icons.length > 0 && icons[0] != null) {
+            icons[0].setState(holder.oneSearchSource.getDrawableState());
         }
         holder.oneSearchSource.setTag(sourceBean);
         holder.oneSearchSource.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
