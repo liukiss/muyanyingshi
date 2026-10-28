@@ -264,6 +264,10 @@ public class VodController extends BaseController {
     LockRunnable lockRunnable = new LockRunnable();
     private boolean isLock = false;
     private boolean previewMode = false;
+    // 竖屏视频自动转竖屏：每次进入播放器页只判定一次
+    private boolean autoPortraitDecisionDone = false;
+    // 新影片尚未真正起播前不判定，避免拿到上一部影片残留的分辨率
+    private boolean autoPortraitAwaitingPlayback = false;
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 10000;//闲置多少毫秒秒关闭底栏  默认6秒
@@ -287,6 +291,8 @@ public class VodController extends BaseController {
             String width = Integer.toString(mVideoSizes[0]);
             String height = Integer.toString(mVideoSizes[1]);
             mVideoSize.setText(width + " X " + height);
+            // 兜底：个别解码器在起播瞬间仍上报 0，后续轮询到有效尺寸后再判定
+            tryAutoEnterPortrait();
 
             mHandler.postDelayed(this, 1000);
         }
@@ -309,10 +315,50 @@ public class VodController extends BaseController {
     }
 
     public void setPreviewMode(boolean previewMode) {
+        boolean enteringPlayerPage = this.previewMode && !previewMode;
         this.previewMode = previewMode;
         mHandler.removeCallbacks(lockRunnable);
         if (mLockView != null) {
             mLockView.setVisibility(INVISIBLE);
+        }
+        if (enteringPlayerPage) {
+            autoPortraitDecisionDone = false;
+            tryAutoEnterPortrait();
+        }
+    }
+
+    /** 换片/重新选剧集时允许重新判定一次 */
+    public void resetAutoPortraitDecision() {
+        autoPortraitDecisionDone = false;
+        autoPortraitAwaitingPlayback = true;
+    }
+
+    /**
+     * 竖屏视频在全屏播放器内自动转竖屏。
+     * 详情页预览（previewMode）不处理；用户手动切换后不再干预；仅判定一次。
+     */
+    private void tryAutoEnterPortrait() {
+        if (previewMode || autoPortraitDecisionDone || autoPortraitAwaitingPlayback) return;
+        if (mActivity == null || mControlWrapper == null || mActivity.isFinishing()) return;
+        if (ScreenUtils.isTv(mActivity) || ScreenUtils.getSqrt(mActivity) >= 10.0) {
+            autoPortraitDecisionDone = true;
+            return;
+        }
+        int[] videoSize = mControlWrapper.getVideoSize();
+        if (videoSize == null || videoSize.length < 2 || videoSize[0] <= 0 || videoSize[1] <= 0) {
+            return; // 尺寸未就绪，等待下一次回调
+        }
+        autoPortraitDecisionDone = true;
+        // 用“请求的方向”判断，避免刚进入播放器页时配置尚未完成旋转导致误判
+        int requestedOrientation = mActivity.getRequestedOrientation();
+        boolean requestedPortrait = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+        if (videoSize[1] > videoSize[0] && !requestedPortrait) {
+            if (mLandscapePortraitBtn != null) {
+                mLandscapePortraitBtn.setText("横屏");
+            }
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         }
     }
 
@@ -1097,6 +1143,7 @@ public class VodController extends BaseController {
         }
         mLandscapePortraitBtn.setVisibility(showButton ? VISIBLE : GONE);
         if (showButton) mLandscapePortraitBtn.setText(isPortrait ? "横屏" : "竖屏");
+        tryAutoEnterPortrait();
     }
 
     private void updatePortraitMenu(boolean isPortrait) {
@@ -1137,6 +1184,8 @@ public class VodController extends BaseController {
 
     void setLandscapePortrait() {
         if (mActivity == null) return;
+        // 用户手动切换后，本次播放不再自动干预
+        autoPortraitDecisionDone = true;
         if (mActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             mLandscapePortraitBtn.setText("竖屏");
             mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
@@ -1502,6 +1551,7 @@ public class VodController extends BaseController {
             case VideoView.STATE_IDLE:
                 break;
             case VideoView.STATE_PLAYING:
+                autoPortraitAwaitingPlayback = false;
                 initLandscapePortraitBtnInfo();
                 startProgress();
                 break;

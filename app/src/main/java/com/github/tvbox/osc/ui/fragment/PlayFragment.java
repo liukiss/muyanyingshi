@@ -1359,6 +1359,7 @@ public class PlayFragment extends BaseLazyFragment {
         sourceBean = ApiConfig.get().getSource(sourceKey);
         ApiConfig.get().setCurrentPlaySourceKey(sourceKey);
         initPlayerCfg();
+        mController.resetAutoPortraitDecision();
         triedLineFlags.clear();
         play(false);
     }
