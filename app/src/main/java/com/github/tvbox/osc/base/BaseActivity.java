@@ -52,6 +52,9 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     private static int autoSizeBaseHeight = 0;
     // 手机版：显示尺寸未与窗口一致前不写 AutoSize 基准（从横屏页返回的瞬间基准仍可能是横屏宽度）
     private int autoSizeRetryCount = 0;
+    // 手机版：挂在 decorView 上等待密度就绪的动作，页面不可见时需要主动取消
+    private Runnable pendingAutoSizeAction;
+    private View pendingAutoSizeHost;
     private final Runnable refreshAutoSizeRunnable = new Runnable() {
         @Override
         public void run() {
@@ -210,6 +213,8 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         super.onPause();
         getWindow().getDecorView().removeCallbacks(refreshAutoSizeRunnable);
         getWindow().getDecorView().removeCallbacks(hideSysBarRunnable);
+        // 手机版：页面不可见后不再执行待弹出的动作，避免在已销毁的页面上创建弹窗
+        cancelPendingAutoSizeAction();
     }
 
     @Override
@@ -306,8 +311,8 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
                 AutoSizeConfig.getInstance().setScreenWidth(width).setScreenHeight(height);
             }
             AutoSizeCompat.autoConvertDensityOfCustomAdapt(super.getResources(), this);
-        } catch (Throwable th) {
-            th.printStackTrace();
+        } catch (Throwable ignored) {
+            // 该方法位于 getResources() 热路径，异常时不做任何输出，避免随每次资源访问刷日志
         }
     }
 
@@ -388,16 +393,23 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
      */
     public void postWhenAutoSizeStable(final Runnable action) {
         if (action == null) return;
+        cancelPendingAutoSizeAction();
         final View decorView = getWindow().getDecorView();
-        decorView.post(new Runnable() {
+        Runnable posted = new Runnable() {
             private int retry = 0;
 
             @Override
             public void run() {
+                // 页面已销毁则丢弃，不再回调业务动作
+                if (isFinishing() || isDestroyed()) {
+                    clearPendingAutoSizeAction(this);
+                    return;
+                }
                 if (isAutoSizeLayoutReady()) {
                     // 方向与窗口已就绪：先用当前窗口尺寸重写一次密度，再创建弹窗，
                     // 避免 Resources 里残留上一次横屏写下的密度
                     refreshAutoSize();
+                    clearPendingAutoSizeAction(this);
                     action.run();
                     return;
                 }
@@ -407,9 +419,29 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
                 }
                 // 超时：刷新一次后仍执行，避免按钮无响应
                 refreshAutoSize();
+                clearPendingAutoSizeAction(this);
                 action.run();
             }
-        });
+        };
+        pendingAutoSizeAction = posted;
+        pendingAutoSizeHost = decorView;
+        decorView.post(posted);
+    }
+
+    /** 手机版：取消尚未执行的"密度就绪后动作" */
+    private void cancelPendingAutoSizeAction() {
+        if (pendingAutoSizeAction != null && pendingAutoSizeHost != null) {
+            pendingAutoSizeHost.removeCallbacks(pendingAutoSizeAction);
+        }
+        pendingAutoSizeAction = null;
+        pendingAutoSizeHost = null;
+    }
+
+    private void clearPendingAutoSizeAction(Runnable posted) {
+        if (pendingAutoSizeAction == posted) {
+            pendingAutoSizeAction = null;
+            pendingAutoSizeHost = null;
+        }
     }
 
     private void updateScreenRatio(DisplayMetrics dm) {

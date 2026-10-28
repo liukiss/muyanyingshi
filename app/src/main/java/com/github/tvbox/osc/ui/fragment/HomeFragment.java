@@ -91,6 +91,8 @@ public class HomeFragment extends BaseLazyFragment {
     private TvRecyclerView mGridView;
     private NoScrollViewPager mViewPager;
     private PopupWindow categoryPopup;
+    /** 手机版：上次尝试弹出分类弹窗的时间，用于忽略连续快速点击（等待密度就绪期间重复点击会排队重复弹出） */
+    private long lastCategoryPopupTime;
     private TvRecyclerView rvCategories;
     private CategoryGridAdapter categoryAdapter;
     private SourceViewModel sourceViewModel;
@@ -391,6 +393,28 @@ public class HomeFragment extends BaseLazyFragment {
         }
         if (categoryPopup != null && categoryPopup.isShowing()) {
             categoryPopup.dismiss();
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastCategoryPopupTime < 600 || !(mActivity instanceof BaseActivity)) {
+            return;
+        }
+        // 手机版：与换源/指定搜索源保持一致，等密度基准稳定后再按 mm 膨胀弹窗，
+        // 避免从横屏/全屏页返回的瞬间把条目按错误密度撑大
+        lastCategoryPopupTime = now;
+        ((BaseActivity) mActivity).postWhenAutoSizeStable(new Runnable() {
+            @Override
+            public void run() {
+                if (isActivityUnavailable()) {
+                    return;
+                }
+                showCategoryPopupNow();
+            }
+        });
+    }
+
+    private void showCategoryPopupNow() {
+        if (sortAdapter == null || sortAdapter.getData() == null || sortAdapter.getData().isEmpty()) {
             return;
         }
         View content = LayoutInflater.from(mContext).inflate(R.layout.popup_home_categories, null);

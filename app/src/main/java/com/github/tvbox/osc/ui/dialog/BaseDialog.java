@@ -91,7 +91,7 @@ public class BaseDialog extends Dialog {
     }
 
     /**
-     * 手机版底部面板：贴屏幕下缘全宽显示，高度占屏幕 78%，从下向上滑入。
+     * 手机版底部面板：贴屏幕下缘全宽显示，高度占屏幕长边的 50%，从下向上滑入。
      * 必须在 {@code super.show()} 之前调用。
      */
     protected void prepareBottomSheet() {
