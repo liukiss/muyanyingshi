@@ -248,6 +248,28 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         }
     }
 
+    /**
+     * 手机版：供弹窗在布局膨胀前调用，保证弹窗用的是正确的 mm 密度。
+     * 弹窗的 Context 是 ContextThemeWrapper，可能持有独立的 Resources 实例
+     * （系统配置变化时会被重置为原生密度，但不会经过 Activity 的 getResources 重写），
+     * 所以这里除了校正全局基准，还要对弹窗自己的 Resources 再应用一次；
+     * 否则 vs_* 尺寸和带 mm 描边的 shape 会按原生密度膨胀并被记进资源缓存，
+     * 出现描边过粗、圆角接近半圆的异常。
+     *
+     * @param dialogResources 弹窗 Context 的 Resources，可为 null
+     */
+    public void prepareDialogAutoSize(Resources dialogResources) {
+        applyAutoSizeDensity();
+        if (dialogResources == null || dialogResources == super.getResources()) {
+            return;
+        }
+        try {
+            AutoSizeCompat.autoConvertDensityOfCustomAdapt(dialogResources, this);
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+    }
+
     /** 手机版：按本页设计方向取显示尺寸的长边/短边，得到 AutoSize 的基准宽度 */
     private int calcAutoSizeWidth(DisplayMetrics dm) {
         return isLandscapePage() ? Math.max(dm.widthPixels, dm.heightPixels)

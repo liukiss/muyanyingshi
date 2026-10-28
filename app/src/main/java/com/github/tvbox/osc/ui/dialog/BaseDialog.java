@@ -24,10 +24,38 @@ import xyz.doikki.videoplayer.util.CutoutUtil;
 public class BaseDialog extends Dialog {
     public BaseDialog(@NonNull Context context) {
         super(context, R.style.CustomDialogStyle);
+        prepareAutoSize();
     }
 
     public BaseDialog(Context context, int customDialogStyle) {
         super(context, customDialogStyle);
+        prepareAutoSize();
+    }
+
+    /**
+     * 手机版：在子类 setContentView 膨胀布局之前，把自动适配密度校正到位。
+     * 本项目 vs_* / ts_* 都是 mm 单位，mm 换算依赖 DisplayMetrics#xdpi；
+     * 旋转或从横屏全屏页返回后系统会把 metrics 重置为原生值，
+     * 此时膨胀的布局与带 mm 描边的 drawable 会被放大数倍并记进资源缓存，
+     * 导致弹窗一直显示异常。这里必须同步执行（不能 post），否则膨胀已经发生在校正之前。
+     */
+    private void prepareAutoSize() {
+        BaseActivity activity = findHostActivity(getContext());
+        if (activity == null) {
+            return;
+        }
+        activity.prepareDialogAutoSize(getContext().getResources());
+    }
+
+    /** 手机版：沿 ContextWrapper 链找到宿主 BaseActivity，找不到返回 null */
+    private static BaseActivity findHostActivity(Context context) {
+        while (context instanceof android.content.ContextWrapper) {
+            if (context instanceof BaseActivity) {
+                return (BaseActivity) context;
+            }
+            context = ((android.content.ContextWrapper) context).getBaseContext();
+        }
+        return null;
     }
 
     @Override
