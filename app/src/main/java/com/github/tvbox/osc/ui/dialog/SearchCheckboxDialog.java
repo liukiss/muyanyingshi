@@ -13,6 +13,7 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.ui.adapter.CheckboxSearchAdapter;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
+import com.github.tvbox.osc.util.ScreenUtils;
 import com.owen.tvrecyclerview.widget.TvRecyclerView;
 import com.owen.tvrecyclerview.widget.V7GridLayoutManager;
 import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
@@ -55,6 +56,10 @@ public class SearchCheckboxDialog extends BaseDialog{
         mGridView = findViewById(R.id.mGridView);
         checkAll = findViewById(R.id.checkAll);
         clearAll = findViewById(R.id.clearAll);
+        // 手机版：“全选/全不选”的胶囊背景在代码里生成，避免资源缓存里错误密度下的圆角/描边
+        float pxPerMm = ScreenUtils.pxPerMm(context);
+        checkAll.setBackground(ScreenUtils.createDialogControlBackground(context, pxPerMm));
+        clearAll.setBackground(ScreenUtils.createDialogControlBackground(context, pxPerMm));
         checkboxSearchAdapter = new CheckboxSearchAdapter(new DiffUtil.ItemCallback<SourceBean>() {
             @Override
             public boolean areItemsTheSame(@NonNull SourceBean oldItem, @NonNull SourceBean newItem) {

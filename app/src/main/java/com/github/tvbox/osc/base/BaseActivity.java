@@ -3,6 +3,7 @@ package com.github.tvbox.osc.base;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -13,6 +14,7 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.WindowInsets;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.PermissionChecker;
@@ -45,6 +47,9 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     private LoadService mLoadService;
 
     private static float screenRatio = -100.0f;
+    // 手机版：AutoSizeConfig 是全局单例，这里记录已写入的基准，只有变化时才重设
+    private static int autoSizeBaseWidth = 0;
+    private static int autoSizeBaseHeight = 0;
     // 手机版：显示尺寸未与窗口一致前不写 AutoSize 基准（从横屏页返回的瞬间基准仍可能是横屏宽度）
     private int autoSizeRetryCount = 0;
     private final Runnable refreshAutoSizeRunnable = new Runnable() {
@@ -236,14 +241,71 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
                 return;
             }
             updateScreenRatio(dm);
-            AutoSizeConfig.getInstance()
-                    .setScreenWidth(dm.widthPixels)
-                    .setScreenHeight(dm.heightPixels);
-            AutoSizeCompat.autoConvertDensityOfCustomAdapt(super.getResources(), this);
+            applyAutoSizeDensity();
             getWindow().getDecorView().requestLayout();
         } catch (Throwable th) {
             th.printStackTrace();
         }
+    }
+
+    /** 手机版：按本页设计方向取显示尺寸的长边/短边，得到 AutoSize 的基准宽度 */
+    private int calcAutoSizeWidth(DisplayMetrics dm) {
+        return isLandscapePage() ? Math.max(dm.widthPixels, dm.heightPixels)
+                : Math.min(dm.widthPixels, dm.heightPixels);
+    }
+
+    /** 手机版：与基准宽度对应的基准高度 */
+    private int calcAutoSizeHeight(DisplayMetrics dm) {
+        return isLandscapePage() ? Math.min(dm.widthPixels, dm.heightPixels)
+                : Math.max(dm.widthPixels, dm.heightPixels);
+    }
+
+    /**
+     * 手机版：先用"当前显示尺寸 + 本页设计方向"校正 AutoSize 的全局基准，再重写密度。
+     * 从横屏页返回或旋转时系统会把 DisplayMetrics 重置为原生值，而本项目 vs_*、ts_* 都是 mm 单位，
+     * mm 换算依赖 DisplayMetrics#xdpi；如果这里没有立即按正确基准重写，
+     * 紧接着膨胀的 drawable（如 button_danmu_setting）会把数倍大的描边和圆角记进资源缓存，
+     * 之后所有复用该 drawable 的控件（换源、指定搜索源条目）都会一直显示异常。
+     */
+    private void applyAutoSizeDensity() {
+        try {
+            // 直接用当前 Resources 里的 metrics：widthPixels/heightPixels 不会被 AutoSize 改写，
+            // 始终反映显示的真实长宽，所以即使方向还没切换完也能算出正确的基准
+            DisplayMetrics dm = super.getResources().getDisplayMetrics();
+            int width = calcAutoSizeWidth(dm);
+            int height = calcAutoSizeHeight(dm);
+            if (width <= 0 || height <= 0) {
+                return;
+            }
+            if (width != autoSizeBaseWidth || height != autoSizeBaseHeight) {
+                // 只在基准变化时写全局配置
+                autoSizeBaseWidth = width;
+                autoSizeBaseHeight = height;
+                AutoSizeConfig.getInstance().setScreenWidth(width).setScreenHeight(height);
+            }
+            AutoSizeCompat.autoConvertDensityOfCustomAdapt(super.getResources(), this);
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        try {
+            DisplayMetrics dm = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(dm);
+            if (dm.widthPixels > 0 && dm.heightPixels > 0) {
+                updateScreenRatio(dm);
+            }
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+        // 手机版：方向变化后系统已把 DisplayMetrics 重置为原生密度，立即按新方向重写一次，
+        // 避免错误 mm 密度下的 drawable 被膨胀并缓存
+        applyAutoSizeDensity();
+        autoSizeRetryCount = 0;
+        getWindow().getDecorView().requestLayout();
     }
 
     /**
@@ -340,7 +402,9 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     @Override
     public Resources getResources() {
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            AutoSizeCompat.autoConvertDensityOfCustomAdapt(super.getResources(), this);
+            // 手机版：基准可能被横屏页写成横屏宽度，这里每次都按当前显示尺寸校正后再应用密度，
+            // 避免竖屏页面的 mm 换算被放大（弹窗描边/圆角异常即由此产生）
+            applyAutoSizeDensity();
         }
         return super.getResources();
     }

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.tvbox.osc.R;
+import com.github.tvbox.osc.util.ScreenUtils;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -89,8 +90,11 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
         // “屏幕实际宽 / 360mm”换算后写死。条目要到弹窗第一帧布局时才膨胀，
         // 那一瞬间 Resources 的 mm 换算密度可能仍是系统原生值（约设计基准的 6.3 倍），
         // 会把条目撑到 793px 高、左右内边距各 227px 而超过列宽（308px），文字宽度变成 0 完全不可见。
-        float pxPerMm = pxPerMm(holder.itemView);
+        float pxPerMm = ScreenUtils.pxPerMm(view.getContext());
         applyItemSize(holder.itemView, pxPerMm, 30f);
+        // 手机版：胶囊背景也在代码里生成（圆角 6 单位、描边 1 单位），
+        // 不再依赖 button_danmu_setting 的 mm 换算与资源缓存
+        view.setBackground(ScreenUtils.createDialogControlBackground(view.getContext(), pxPerMm));
         view.setMinimumHeight(Math.round(pxPerMm * 30f));
         view.setTextSize(TypedValue.COMPLEX_UNIT_PX, pxPerMm * 12f);
         int padH = Math.round(pxPerMm * 12f);
@@ -115,14 +119,6 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
                 dialogInterface.click(value, position);
             }
         });
-    }
-
-    /**
-     * 手机版：按"屏幕实际宽 / 360mm 设计宽"换算像素，不依赖 AutoSize 的全局基准状态。
-     */
-    private float pxPerMm(View view) {
-        int width = view.getResources().getDisplayMetrics().widthPixels;
-        return width > 0 ? width / 360f : 3f;
     }
 
     /**

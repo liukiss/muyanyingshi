@@ -23,7 +23,6 @@ import com.kingja.loadsir.core.LoadSir;
 
 import java.util.List;
 
-import me.jessyan.autosize.AutoSize;
 import me.jessyan.autosize.internal.CustomAdapt;
 
 /**
@@ -66,7 +65,9 @@ public abstract class BaseLazyFragment extends Fragment implements CustomAdapt {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        AutoSize.autoConvertDensity(getActivity(), getSizeInDp(), isBaseOnWidth());
+        // 手机版：不再在 Fragment 里单独应用 AutoSize。
+        // Activity 的 getResources() 已按当前显示尺寸校正基准后重写密度，
+        // Fragment 里再调用会用可能残留的横屏基准把竖屏页面放大。
         if (null == rootView) {
             rootView = inflater.inflate(getLayoutResID(), container, false);
         }
@@ -199,7 +200,6 @@ public abstract class BaseLazyFragment extends Fragment implements CustomAdapt {
      */
     @Override
     public void onResume() {
-        AutoSize.autoConvertDensity(getActivity(), getSizeInDp(), isBaseOnWidth());
         super.onResume();
         // 如果不是第一次可见
         if (!mIsFirstVisible) {

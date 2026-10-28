@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.util.LOG;
+import com.github.tvbox.osc.util.ScreenUtils;
 import com.github.tvbox.osc.util.SearchHelper;
 
 import org.jetbrains.annotations.NotNull;
@@ -73,8 +74,11 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
         // “屏幕实际宽 / 360mm”换算后写死。条目要到弹窗第一帧布局时才膨胀，
         // 那一瞬间 Resources 的 mm 换算密度可能仍是系统原生值（约设计基准的 6.3 倍），
         // 会把条目撑得很高、内边距大到吃掉整个列宽，导致文字和勾选图标都不可见。
-        float pxPerMm = pxPerMm(holder.itemView);
+        float pxPerMm = ScreenUtils.pxPerMm(holder.itemView.getContext());
         applyItemSize(holder.itemView, pxPerMm, 27f);
+        Context context = holder.itemView.getContext();
+        // 手机版：胶囊背景在代码里生成，避免 Resources 缓存的旧 drawable 沿用错误 mm 密度
+        holder.oneSearchSource.setBackground(ScreenUtils.createDialogControlBackground(context, pxPerMm));
         View inner = (View) holder.oneSearchSource.getParent();
         int padH = Math.round(pxPerMm * 5f);
         int padV = Math.round(pxPerMm * 1f);
@@ -88,9 +92,8 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
         if (mCheckedSources != null) {
             holder.oneSearchSource.setChecked(mCheckedSources.containsKey(sourceBean.getKey()));
         }
-        // 手机版：复选框图标按"屏幕实际宽 / 360mm 设计宽"换算尺寸（系统默认图标在 mm 设计尺寸下偏大），
+        // 手机版：复选框图标按设计单位换算尺寸（系统默认图标在 mm 设计尺寸下偏大），
         // 并按选中状态刷新，不再依赖 AutoSize 的全局基准
-        Context context = holder.itemView.getContext();
         Drawable icon = ContextCompat.getDrawable(context, R.drawable.selector_source_check);
         if (icon != null) {
             int size = Math.round(pxPerMm * 15f);
@@ -121,14 +124,6 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
             super(view);
             oneSearchSource = (CheckBox) view.findViewById(R.id.oneSearchSource);
         }
-    }
-
-    /**
-     * 手机版：按"屏幕实际宽 / 360mm 设计宽"换算像素，不依赖 AutoSize 的全局基准状态。
-     */
-    private float pxPerMm(View view) {
-        int width = view.getResources().getDisplayMetrics().widthPixels;
-        return width > 0 ? width / 360f : 3f;
     }
 
     /**
