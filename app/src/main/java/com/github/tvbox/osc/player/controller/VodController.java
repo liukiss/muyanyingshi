@@ -351,6 +351,17 @@ public class VodController extends BaseController {
     }
 
     /**
+     * 当前视频是否为竖屏（高 &gt; 宽）。
+     * 供全屏入口在请求方向前预判，竖屏视频可免去“先横屏再转竖屏”的旋转过程。
+     * 尺寸未就绪（起播瞬间/切集后）返回 false，由 tryAutoEnterPortrait 兜底。
+     */
+    public boolean isCurrentVideoPortrait() {
+        if (mControlWrapper == null) return false;
+        int[] videoSize = mControlWrapper.getVideoSize();
+        return videoSize != null && videoSize.length >= 2 && videoSize[0] > 0 && videoSize[1] > videoSize[0];
+    }
+
+    /**
      * 竖屏视频在全屏播放器内自动转竖屏。
      * 详情页预览（previewMode）不处理；用户手动切换后不再干预；仅判定一次。
      */

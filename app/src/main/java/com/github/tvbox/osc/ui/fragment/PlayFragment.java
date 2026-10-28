@@ -1422,6 +1422,11 @@ public class PlayFragment extends BaseLazyFragment {
         this.exitingPreview = exitingPreview;
     }
 
+    /** 当前视频是否为竖屏，供全屏入口在请求方向前预判 */
+    public boolean isCurrentVideoPortrait() {
+        return mController != null && mController.isCurrentVideoPortrait();
+    }
+
     private boolean hasAudioOnlyPlayback() {
         return Boolean.TRUE.equals(getAudioOnlyPlayback());
     }

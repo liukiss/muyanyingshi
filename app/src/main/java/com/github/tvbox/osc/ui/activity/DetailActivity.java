@@ -2017,6 +2017,8 @@ public class DetailActivity extends BaseActivity {
     // preview
     VodInfo previewVodInfo = null;
     boolean fullWindows = false;
+    /** 本次全屏是否为“竖屏视频直达竖屏”，用于退出时补做列表刷新 */
+    private boolean portraitFullWindows = false;
     private int previewOrientation;
     private boolean previewOrientationChanged;
     ViewGroup.LayoutParams windowsPreview = null;
@@ -2031,7 +2033,10 @@ public class DetailActivity extends BaseActivity {
     }
 
     void exitFullPreview() {
-        boolean needRefreshSeries = previewOrientationChanged;
+        // 竖屏视频直达全屏时不会触发 onConfigurationChanged，这里补上同样的退出刷新，
+        // 保证全屏期间切换过的剧集在返回详情页后能正确高亮
+        boolean needRefreshSeries = previewOrientationChanged || portraitFullWindows;
+        portraitFullWindows = false;
         setFullPreview(false);
         previewOrientationChanged = false;
         if (needRefreshSeries) {
@@ -2094,12 +2099,17 @@ public class DetailActivity extends BaseActivity {
             previewOrientationChanged = false;
         }
         fullWindows = full;
-        // 手机版适配：进入全屏播放旋转为横屏，退出全屏恢复竖屏浏览
-        landscapeDesign = full;
+        // 手机版适配：横屏视频进入全屏旋转为横屏；竖屏视频直接在竖屏展开，
+        // 避免“先转横屏、判定后再转回竖屏”的两次旋转动画
+        boolean portraitFull = full && playFragment != null && playFragment.isCurrentVideoPortrait();
+        portraitFullWindows = portraitFull;
+        landscapeDesign = full && !portraitFull;
         // 全屏播放隐藏状态栏，退出后恢复
         hideSysBar();
         setRequestedOrientation(fullWindows
-                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                ? (portraitFull
+                        ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                        : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE)
                 : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         if (playFragment != null) {
             playFragment.setAutoSwitchLineEnabled(!fullWindows);
