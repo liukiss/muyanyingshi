@@ -315,15 +315,32 @@ public class VodController extends BaseController {
     }
 
     public void setPreviewMode(boolean previewMode) {
-        boolean enteringPlayerPage = this.previewMode && !previewMode;
         this.previewMode = previewMode;
         mHandler.removeCallbacks(lockRunnable);
         if (mLockView != null) {
             mLockView.setVisibility(INVISIBLE);
         }
-        if (enteringPlayerPage) {
+        if (!previewMode) {
+            // 每次进入播放器页都重新判定一次；已起播/已暂停时分辨率已知，可立即评估
             autoPortraitDecisionDone = false;
+            autoPortraitAwaitingPlayback = videoPlayState != VideoView.STATE_PLAYING
+                    && videoPlayState != VideoView.STATE_PAUSED;
             tryAutoEnterPortrait();
+            // 刚进入全屏时方向/尺寸可能尚未稳定，延迟补判两次
+            if (mHandler != null) {
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        tryAutoEnterPortrait();
+                    }
+                }, 400);
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        tryAutoEnterPortrait();
+                    }
+                }, 1200);
+            }
         }
     }
 
@@ -348,18 +365,28 @@ public class VodController extends BaseController {
         if (videoSize == null || videoSize.length < 2 || videoSize[0] <= 0 || videoSize[1] <= 0) {
             return; // 尺寸未就绪，等待下一次回调
         }
-        autoPortraitDecisionDone = true;
-        // 用“请求的方向”判断，避免刚进入播放器页时配置尚未完成旋转导致误判
+        if (videoSize[1] <= videoSize[0]) {
+            autoPortraitDecisionDone = true; // 横屏/方形视频：判定结束
+            return;
+        }
+        boolean configPortrait = mActivity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
         int requestedOrientation = mActivity.getRequestedOrientation();
         boolean requestedPortrait = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
                 || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-        if (videoSize[1] > videoSize[0] && !requestedPortrait) {
-            if (mLandscapePortraitBtn != null) {
-                mLandscapePortraitBtn.setText("横屏");
+        if (configPortrait) {
+            if (requestedPortrait) {
+                autoPortraitDecisionDone = true; // 已经是竖屏，无需旋转
             }
-            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+            // 否则：已请求横屏但配置尚未完成旋转，暂不锁定，等后续回调重试
+            return;
         }
+        autoPortraitDecisionDone = true;
+        if (mLandscapePortraitBtn != null) {
+            mLandscapePortraitBtn.setText("横屏");
+        }
+        mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
     }
 
     @Override
@@ -1532,6 +1559,8 @@ public class VodController extends BaseController {
     @Override
     protected void updateSeekUI(int curr, int seekTo, int duration) {
         super.updateSeekUI(curr, seekTo, duration);
+        // 播放进度回调期间持续尝试判定，覆盖首次进入时尺寸上报偏晚的情况
+        tryAutoEnterPortrait();
         if (seekTo > curr) {
             mProgressIcon.setImageResource(R.drawable.exo_icon_fastforward);
         } else {
