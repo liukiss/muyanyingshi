@@ -3,6 +3,7 @@ package com.github.tvbox.osc.ui.adapter;
 import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -84,6 +85,17 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
         T value = data.get(position);
         String name = dialogInterface.getDisplay(value);
         TextView view = holder.itemView.findViewById(R.id.tvName);
+        // 手机版：条目内的 mm 尺寸（高度、最小高度、字号、左右内边距）全部在绑定期按
+        // “屏幕实际宽 / 360mm”换算后写死。条目要到弹窗第一帧布局时才膨胀，
+        // 那一瞬间 Resources 的 mm 换算密度可能仍是系统原生值（约设计基准的 6.3 倍），
+        // 会把条目撑到 793px 高、左右内边距各 227px 而超过列宽（308px），文字宽度变成 0 完全不可见。
+        float pxPerMm = pxPerMm(holder.itemView);
+        applyItemSize(holder.itemView, pxPerMm, 30f);
+        view.setMinimumHeight(Math.round(pxPerMm * 30f));
+        view.setTextSize(TypedValue.COMPLEX_UNIT_PX, pxPerMm * 12f);
+        int padH = Math.round(pxPerMm * 12f);
+        int padV = Math.round(pxPerMm * 6f);
+        view.setPadding(padH, padV, padH, padV);
         if (position == select) {
             view.setTextColor(0xff02f8e1);
             view .setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
@@ -103,5 +115,35 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
                 dialogInterface.click(value, position);
             }
         });
+    }
+
+    /**
+     * 手机版：按"屏幕实际宽 / 360mm 设计宽"换算像素，不依赖 AutoSize 的全局基准状态。
+     */
+    private float pxPerMm(View view) {
+        int width = view.getResources().getDisplayMetrics().widthPixels;
+        return width > 0 ? width / 360f : 3f;
+    }
+
+    /**
+     * 手机版：把条目尺寸固定为"宽铺满 + 设计高度"。
+     * 条目在 wrap_content 状态下有可能被测成整个列表高度（内部背景方框被拉得很高、文字被挤出可视区域），
+     * 绑定后直接给出明确的 LayoutParams，测量时即按固定高度处理，不受父级测量结果影响。
+     */
+    private void applyItemSize(View item, float pxPerMm, float heightMm) {
+        int height = Math.round(pxPerMm * heightMm);
+        if (height <= 0) return;
+        ViewGroup.LayoutParams params = item.getLayoutParams();
+        if (params instanceof RecyclerView.LayoutParams) {
+            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) params;
+            if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT && lp.height == height) {
+                return;
+            }
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = height;
+            item.setLayoutParams(lp);
+        } else {
+            item.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height));
+        }
     }
 }

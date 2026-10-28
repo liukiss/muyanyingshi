@@ -4,6 +4,7 @@ package com.github.tvbox.osc.ui.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import me.jessyan.autosize.utils.AutoSizeUtils;
 
 public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearchAdapter.ViewHolder> {
 
@@ -70,20 +69,34 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
     public void onBindViewHolder(ViewHolder holder, int position) {
         int pos = holder.getAdapterPosition();
         SourceBean sourceBean = data.get(pos);
+        // 手机版：条目内的 mm 尺寸（高度、最小高度、字号、内边距）全部在绑定期按
+        // “屏幕实际宽 / 360mm”换算后写死。条目要到弹窗第一帧布局时才膨胀，
+        // 那一瞬间 Resources 的 mm 换算密度可能仍是系统原生值（约设计基准的 6.3 倍），
+        // 会把条目撑得很高、内边距大到吃掉整个列宽，导致文字和勾选图标都不可见。
+        float pxPerMm = pxPerMm(holder.itemView);
+        applyItemSize(holder.itemView, pxPerMm, 27f);
+        View inner = (View) holder.oneSearchSource.getParent();
+        int padH = Math.round(pxPerMm * 5f);
+        int padV = Math.round(pxPerMm * 1f);
+        if (inner != null) {
+            inner.setPadding(padH, padV, padH, padV);
+        }
+        holder.oneSearchSource.setMinimumHeight(Math.round(pxPerMm * 25f));
+        holder.oneSearchSource.setTextSize(TypedValue.COMPLEX_UNIT_PX, pxPerMm * 12f);
         holder.oneSearchSource.setText(sourceBean.getName());
         holder.oneSearchSource.setOnCheckedChangeListener(null);
         if (mCheckedSources != null) {
             holder.oneSearchSource.setChecked(mCheckedSources.containsKey(sourceBean.getKey()));
         }
-        // 手机版：复选框图标按当前密度重算尺寸（系统默认图标在 mm 设计尺寸下偏大），
-        // 并按选中状态刷新，避免横竖屏切换后沿用旧密度膨胀出来的尺寸
+        // 手机版：复选框图标按"屏幕实际宽 / 360mm 设计宽"换算尺寸（系统默认图标在 mm 设计尺寸下偏大），
+        // 并按选中状态刷新，不再依赖 AutoSize 的全局基准
         Context context = holder.itemView.getContext();
         Drawable icon = ContextCompat.getDrawable(context, R.drawable.selector_source_check);
         if (icon != null) {
-            int size = AutoSizeUtils.mm2px(context, 15f);
+            int size = Math.round(pxPerMm * 15f);
             icon.setBounds(0, 0, size, size);
             holder.oneSearchSource.setCompoundDrawables(icon, null, null, null);
-            holder.oneSearchSource.setCompoundDrawablePadding(AutoSizeUtils.mm2px(context, 5f));
+            holder.oneSearchSource.setCompoundDrawablePadding(Math.round(pxPerMm * 5f));
             icon.setState(holder.oneSearchSource.getDrawableState());
         }
         holder.oneSearchSource.setTag(sourceBean);
@@ -107,6 +120,36 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
         public ViewHolder(View view) {
             super(view);
             oneSearchSource = (CheckBox) view.findViewById(R.id.oneSearchSource);
+        }
+    }
+
+    /**
+     * 手机版：按"屏幕实际宽 / 360mm 设计宽"换算像素，不依赖 AutoSize 的全局基准状态。
+     */
+    private float pxPerMm(View view) {
+        int width = view.getResources().getDisplayMetrics().widthPixels;
+        return width > 0 ? width / 360f : 3f;
+    }
+
+    /**
+     * 手机版：把条目尺寸固定为"宽铺满 + 设计高度"。
+     * 条目在 wrap_content 状态下有可能被测成整个列表高度（内部背景方框被拉得很高、文字被挤出可视区域），
+     * 绑定后直接给出明确的 LayoutParams，测量时即按固定高度处理，不受父级测量结果影响。
+     */
+    private void applyItemSize(View item, float pxPerMm, float heightMm) {
+        int height = Math.round(pxPerMm * heightMm);
+        if (height <= 0) return;
+        ViewGroup.LayoutParams params = item.getLayoutParams();
+        if (params instanceof RecyclerView.LayoutParams) {
+            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) params;
+            if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT && lp.height == height) {
+                return;
+            }
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = height;
+            item.setLayoutParams(lp);
+        } else {
+            item.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height));
         }
     }
 
