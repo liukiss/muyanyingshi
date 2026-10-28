@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.http.SslError;
@@ -1407,11 +1406,8 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     public boolean onBackPressed() {
-        int requestedOrientation = requireActivity().getRequestedOrientation();
-        if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT) {
-            requireActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-            mController.mLandscapePortraitBtn.setText("竖屏");
-        }
+        // 手机版适配：竖屏全屏时按返回直接退出全屏回到竖屏详情页。
+        // 原来这里会把方向强制改成横屏，导致退出过程出现一次“竖屏→横屏→竖屏”的旋转动画。
         if (mController.onBackPressed()) {
             return true;
         }
