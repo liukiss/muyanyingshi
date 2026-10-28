@@ -29,6 +29,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.catvod.crawler.JsLoader;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
+import com.github.tvbox.osc.base.BaseActivity;
 import com.github.tvbox.osc.base.BaseLazyFragment;
 import com.github.tvbox.osc.bean.AbsXml;
 import com.github.tvbox.osc.bean.Movie;
@@ -349,25 +350,46 @@ public class SearchFragment extends BaseLazyFragment {
         tvSearchCheckboxBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                List<SourceBean> searchAbleSource = ApiConfig.get().getSearchSourceBeanList();
-                if (mSearchCheckboxDialog == null) {
-                    mSearchCheckboxDialog = new SearchCheckboxDialog(mActivity, searchAbleSource, mCheckSources);
-                }else {
-                    if(searchAbleSource.size()!=mSearchCheckboxDialog.mSourceList.size()){
-                        mSearchCheckboxDialog.setMSourceList(searchAbleSource);
-                    }
+                // 手机版：从横屏直播页返回的瞬间 AutoSize 基准可能仍是横屏宽度，
+                // 此时膨胀出来的条目会被放大，等显示尺寸稳定后再创建面板。
+                if (mActivity instanceof BaseActivity) {
+                    ((BaseActivity) mActivity).postWhenAutoSizeStable(new Runnable() {
+                        @Override
+                        public void run() {
+                            showSearchCheckboxDialog();
+                        }
+                    });
+                    return;
                 }
-                mSearchCheckboxDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        dialog.dismiss();
-                    }
-                });
-                // 手机版：底部面板弹出前收起输入法，避免键盘挡住面板
-                hiddenImm();
-                mSearchCheckboxDialog.show();
+                showSearchCheckboxDialog();
             }
         });
+    }
+
+    private void showSearchCheckboxDialog() {
+        // 手机版：等待期间页面可能已切换，重建前再校验一次宿主
+        if (mActivity == null || mActivity.isFinishing()
+                || (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1 && mActivity.isDestroyed())) {
+            return;
+        }
+        List<SourceBean> searchAbleSource = ApiConfig.get().getSearchSourceBeanList();
+        if (mSearchCheckboxDialog == null) {
+            mSearchCheckboxDialog = new SearchCheckboxDialog(mActivity, searchAbleSource, mCheckSources);
+        } else {
+            if (searchAbleSource.size() != mSearchCheckboxDialog.mSourceList.size()) {
+                mSearchCheckboxDialog.setMSourceList(searchAbleSource);
+            }
+        }
+        mSearchCheckboxDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                // 手机版：关闭后丢弃实例，保证下次按当前密度重新膨胀列表条目
+                mSearchCheckboxDialog = null;
+            }
+        });
+        // 手机版：底部面板弹出前收起输入法，避免键盘挡住面板
+        hiddenImm();
+        mSearchCheckboxDialog.show();
     }
 
     private void startSearch(String wd) {

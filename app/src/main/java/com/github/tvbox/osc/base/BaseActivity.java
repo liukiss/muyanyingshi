@@ -45,11 +45,13 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     private LoadService mLoadService;
 
     private static float screenRatio = -100.0f;
+    // 手机版：显示尺寸未与窗口一致前不写 AutoSize 基准（从横屏页返回的瞬间基准仍可能是横屏宽度）
+    private int autoSizeRetryCount = 0;
     private final Runnable refreshAutoSizeRunnable = new Runnable() {
         @Override
         public void run() {
             if (shouldRefreshAutoSize()) {
-                refreshAutoSize();
+                refreshAutoSizeWhenStable();
             }
         }
     };
@@ -86,7 +88,7 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         hideSysBar();
         changeWallpaper(false);
         if (shouldRefreshAutoSize()) {
-            refreshAutoSize();
+            refreshAutoSizeWhenStable();
             scheduleRefreshAutoSize();
         }
     }
@@ -242,6 +244,70 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         } catch (Throwable th) {
             th.printStackTrace();
         }
+    }
+
+    /**
+     * 手机版：显示尺寸是否已经和窗口一致。
+     * 从横屏全屏页返回的瞬间，Display 仍是横屏尺寸而窗口已回到竖屏，
+     * 此时若把显示宽当作设计基准，之后新膨胀的 mm 尺寸（弹窗条目等）会被放大。
+     */
+    public boolean isAutoSizeSettled() {
+        try {
+            DisplayMetrics dm = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(dm);
+            if (dm.widthPixels <= 0) {
+                return false;
+            }
+            int decorWidth = getWindow().getDecorView().getWidth();
+            if (decorWidth <= 0) {
+                return false;
+            }
+            return Math.abs(dm.widthPixels - decorWidth) <= Math.max(8, dm.widthPixels / 10);
+        } catch (Throwable th) {
+            th.printStackTrace();
+            return true;
+        }
+    }
+
+    /**
+     * 手机版：等显示尺寸稳定后再刷新 AutoSize 基准，最多重试 20 次（约 2 秒），
+     * 超时后退回原有行为，避免个别机型永远判定不稳定而不再刷新。
+     */
+    public void refreshAutoSizeWhenStable() {
+        if (isAutoSizeSettled()) {
+            autoSizeRetryCount = 0;
+            refreshAutoSize();
+            return;
+        }
+        if (autoSizeRetryCount++ < 20) {
+            View decorView = getWindow().getDecorView();
+            decorView.removeCallbacks(refreshAutoSizeRunnable);
+            decorView.postDelayed(refreshAutoSizeRunnable, 100);
+        } else {
+            autoSizeRetryCount = 0;
+            refreshAutoSize();
+        }
+    }
+
+    /**
+     * 手机版：显示尺寸稳定后再执行（用于创建弹窗等按 mm 膨胀视图的操作），
+     * 避免从横屏全屏页返回的瞬间按横屏基准构建视图导致条目被放大。
+     */
+    public void postWhenAutoSizeStable(final Runnable action) {
+        if (action == null) return;
+        final View decorView = getWindow().getDecorView();
+        decorView.post(new Runnable() {
+            private int retry = 0;
+
+            @Override
+            public void run() {
+                if (isAutoSizeSettled() || retry++ >= 20) {
+                    action.run();
+                    return;
+                }
+                decorView.postDelayed(this, 100);
+            }
+        });
     }
 
     private void updateScreenRatio(DisplayMetrics dm) {

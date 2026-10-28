@@ -84,9 +84,18 @@ public class BaseDialog extends Dialog {
     protected void applyBottomSheet(View dragView) {
         Window window = getWindow();
         if (window == null) return;
-        DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-        // 手机版：面板高度不超过屏幕一半
-        int sheetHeight = (int) (dm.heightPixels * 0.5f);
+        // 手机版：面板高度不超过屏幕一半。
+        // 取真实显示尺寸的长边，避免 AutoSize 改写过的 metrics 或横屏残留导致面板高度异常
+        DisplayMetrics dm = new DisplayMetrics();
+        WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+        if (wm != null && wm.getDefaultDisplay() != null) {
+            wm.getDefaultDisplay().getRealMetrics(dm);
+        }
+        int screenHeight = Math.max(dm.widthPixels, dm.heightPixels);
+        if (screenHeight <= 0) {
+            screenHeight = getContext().getResources().getDisplayMetrics().heightPixels;
+        }
+        int sheetHeight = (int) (screenHeight * 0.5f);
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, sheetHeight);
         View decor = window.getDecorView();
         decor.setTranslationY(0f);

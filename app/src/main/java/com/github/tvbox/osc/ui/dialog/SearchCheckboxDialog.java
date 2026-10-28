@@ -115,6 +115,12 @@ public class SearchCheckboxDialog extends BaseDialog{
 
     @Override
     public void show() {
+        // 手机版：复用实例时先丢弃旧条目，避免横竖屏切换后按错误密度膨胀的 ViewHolder 继续被复用
+        if (mGridView != null && checkboxSearchAdapter != null) {
+            mGridView.setAdapter(null);
+            mGridView.getRecycledViewPool().clear();
+            mGridView.setAdapter(checkboxSearchAdapter);
+        }
         prepareBottomSheet();
         super.show();
         if (!isShowing()) return;

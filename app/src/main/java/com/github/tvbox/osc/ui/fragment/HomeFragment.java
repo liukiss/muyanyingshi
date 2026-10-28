@@ -1014,6 +1014,22 @@ public class HomeFragment extends BaseLazyFragment {
 
     void showSiteSwitch() {
         if (isActivityUnavailable()) return;
+        // 手机版：从横屏直播页返回的瞬间 AutoSize 基准可能仍是横屏宽度，
+        // 此时膨胀出来的弹窗条目会被放大，等显示尺寸稳定后再创建面板。
+        if (mActivity instanceof BaseActivity) {
+            ((BaseActivity) mActivity).postWhenAutoSizeStable(new Runnable() {
+                @Override
+                public void run() {
+                    showSiteSwitchNow();
+                }
+            });
+            return;
+        }
+        showSiteSwitchNow();
+    }
+
+    private void showSiteSwitchNow() {
+        if (isActivityUnavailable()) return;
         List<SourceBean> sites = ApiConfig.get().getSwitchSourceBeanList();
         if (sites.isEmpty()) return;
         int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
