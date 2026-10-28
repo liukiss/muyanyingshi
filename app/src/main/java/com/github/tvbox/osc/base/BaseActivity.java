@@ -247,34 +247,43 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     }
 
     /**
-     * 手机版：显示尺寸是否已经和窗口一致。
-     * 从横屏全屏页返回的瞬间，Display 仍是横屏尺寸而窗口已回到竖屏，
-     * 此时若把显示宽当作设计基准，之后新膨胀的 mm 尺寸（弹窗条目等）会被放大。
+     * 手机版：当前显示方向是否已经和本页设计方向一致。
+     * 从横屏直播全屏页返回的瞬间，Display 与窗口可能同时仍是横屏，
+     * 只看"窗口与显示宽度一致"会误判为已稳定，从而把横屏宽度写成竖屏页面的基准。
      */
-    public boolean isAutoSizeSettled() {
+    private boolean isOrientationMatched(DisplayMetrics dm) {
+        if (dm.widthPixels <= 0 || dm.heightPixels <= 0) {
+            return false;
+        }
+        boolean displayPortrait = dm.widthPixels <= dm.heightPixels;
+        return isLandscapePage() ? !displayPortrait : displayPortrait;
+    }
+
+    /** 手机版：窗口是否已经完成测量并与显示宽度一致 */
+    private boolean isWindowMatched(DisplayMetrics dm, int decorWidth) {
+        return decorWidth > 0 && dm.widthPixels > 0
+                && Math.abs(dm.widthPixels - decorWidth) <= Math.max(8, dm.widthPixels / 10);
+    }
+
+    /** 手机版：方向与窗口是否已就绪（不含密度校验） */
+    private boolean isAutoSizeLayoutReady() {
         try {
             DisplayMetrics dm = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(dm);
-            if (dm.widthPixels <= 0) {
-                return false;
-            }
-            int decorWidth = getWindow().getDecorView().getWidth();
-            if (decorWidth <= 0) {
-                return false;
-            }
-            return Math.abs(dm.widthPixels - decorWidth) <= Math.max(8, dm.widthPixels / 10);
+            return isOrientationMatched(dm) && isWindowMatched(dm, getWindow().getDecorView().getWidth());
         } catch (Throwable th) {
             th.printStackTrace();
-            return true;
+            return false;
         }
     }
 
     /**
-     * 手机版：等显示尺寸稳定后再刷新 AutoSize 基准，最多重试 20 次（约 2 秒），
-     * 超时后退回原有行为，避免个别机型永远判定不稳定而不再刷新。
+     * 手机版：等显示方向与窗口就绪后再刷新 AutoSize 基准，最多重试 20 次（约 2 秒）。
+     * 方向过渡期不做刷新，避免把横屏宽度写成竖屏页面的基准；
+     * 超时静默放弃，下一次 onResume / 窗口焦点变化还会再触发。
      */
     public void refreshAutoSizeWhenStable() {
-        if (isAutoSizeSettled()) {
+        if (isAutoSizeLayoutReady()) {
             autoSizeRetryCount = 0;
             refreshAutoSize();
             return;
@@ -283,15 +292,15 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
             View decorView = getWindow().getDecorView();
             decorView.removeCallbacks(refreshAutoSizeRunnable);
             decorView.postDelayed(refreshAutoSizeRunnable, 100);
-        } else {
-            autoSizeRetryCount = 0;
-            refreshAutoSize();
+            return;
         }
+        autoSizeRetryCount = 0;
     }
 
     /**
-     * 手机版：显示尺寸稳定后再执行（用于创建弹窗等按 mm 膨胀视图的操作），
-     * 避免从横屏全屏页返回的瞬间按横屏基准构建视图导致条目被放大。
+     * 手机版：等 AutoSize 基准可用后再执行（用于创建弹窗等按 mm 膨胀视图的操作）。
+     * 判定可用之后先用当前窗口尺寸重写一次密度再执行，
+     * 避免 Resources 里残留上次横屏写下的密度导致弹窗条目被放大。
      */
     public void postWhenAutoSizeStable(final Runnable action) {
         if (action == null) return;
@@ -301,11 +310,20 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
 
             @Override
             public void run() {
-                if (isAutoSizeSettled() || retry++ >= 20) {
+                if (isAutoSizeLayoutReady()) {
+                    // 方向与窗口已就绪：先用当前窗口尺寸重写一次密度，再创建弹窗，
+                    // 避免 Resources 里残留上一次横屏写下的密度
+                    refreshAutoSize();
                     action.run();
                     return;
                 }
-                decorView.postDelayed(this, 100);
+                if (retry++ < 20) {
+                    decorView.postDelayed(this, 100);
+                    return;
+                }
+                // 超时：刷新一次后仍执行，避免按钮无响应
+                refreshAutoSize();
+                action.run();
             }
         });
     }
