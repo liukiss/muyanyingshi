@@ -55,6 +55,7 @@ import com.github.tvbox.osc.ui.fragment.UserFragment;
 import com.github.tvbox.osc.ui.tv.widget.DefaultTransformer;
 import com.github.tvbox.osc.ui.tv.widget.NoScrollViewPager;
 import com.github.tvbox.osc.util.AppManager;
+import com.github.tvbox.osc.util.ClickEffect;
 import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.FileUtils;
@@ -224,6 +225,12 @@ public class HomeFragment extends BaseLazyFragment {
                 new PushDialog(mActivity).show();
             }
         });
+        // 手机版：顶栏四个图标按钮补充按压反馈（底部导航不做特效）
+        ClickEffect.attach(
+                findViewById(R.id.tvCollectHome),
+                findViewById(R.id.tvPushHome),
+                findViewById(R.id.tvChangeSourceHome),
+                findViewById(R.id.tvSettingHome));
         // 分类行最右侧按钮：下拉弹窗展示全部分类标签
         findViewById(R.id.ivCategoryMore).setOnClickListener(new View.OnClickListener() {
             @Override

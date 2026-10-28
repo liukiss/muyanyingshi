@@ -43,6 +43,7 @@ import com.github.tvbox.osc.ui.dialog.RemoteDialog;
 import com.github.tvbox.osc.ui.dialog.SearchCheckboxDialog;
 import com.github.tvbox.osc.ui.tv.widget.SearchKeyboard;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
+import com.github.tvbox.osc.util.ClickEffect;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.HistoryHelper;
 import com.github.tvbox.osc.util.SearchHelper;
@@ -190,6 +191,8 @@ public class SearchFragment extends BaseLazyFragment {
         historyWordGrid = findViewById(R.id.historyWordGrid);
         tvHistoryClear = findViewById(R.id.tvHistoryClear);
         wordsSwitch = findViewById(R.id.wordSwitch);
+        // 手机版：清空、搜索、指定搜索源与历史删除图标补充按压反馈
+        ClickEffect.attach(tvClear, tvSearch, tvSearchCheckboxBtn, tvHistoryClear);
         // 先注册 LoadSir，结果区被包装成 LoadLayout；applySearchWordMode 需要一并控制包装层显隐
         setLoadSir(llLayout);
         applySearchWordMode();
